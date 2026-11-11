@@ -93,6 +93,17 @@ details.req summary{cursor:pointer;color:var(--muted)}
 .rq{border-radius:6px;padding:1px 7px;font-size:12px}
 .rq.y{background:var(--ok-soft);color:var(--ok)}
 .rq.n{background:var(--gray-soft);color:var(--muted);text-decoration:line-through;text-decoration-color:transparent}
+.ivform{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;align-items:end}
+.ivform label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+.ivform input,.ivform select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;min-width:0;width:100%}
+.ivform .wide{grid-column:1/-1}
+.ivform .formbtns{display:flex;gap:8px;flex-wrap:wrap}
+.ivdate{display:flex;gap:12px;align-items:center}
+.ivday{background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:6px 10px;text-align:center;min-width:56px;font-variant-numeric:tabular-nums}
+.ivday .d{font-size:22px;font-weight:700;line-height:1}
+.ivday .m{font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.past .ivday{background:var(--surface-2);color:var(--muted)}
+.b-soon{background:var(--warn-soft);color:var(--warn)}
 footer{margin-top:40px;color:var(--muted);font-size:12px}
 [hidden]{display:none!important}
 </style>
@@ -130,6 +141,7 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="ofertas" aria-selected="true">Ofertas interesantes<span class="c" id="c-ofertas"></span></button>
     <button class="tab" role="tab" data-tab="candidaturas" aria-selected="false">Mis candidaturas<span class="c" id="c-cand"></span></button>
+    <button class="tab" role="tab" data-tab="entrevistas" aria-selected="false">Entrevistas<span class="c" id="c-iv">0</span></button>
     <button class="tab" role="tab" data-tab="empresas" aria-selected="false">Empresas objetivo<span class="c" id="c-emp"></span></button>
   </nav>
 
@@ -163,6 +175,21 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
       </select>
     </div>
     <div id="listCa"></div>
+  </section>
+
+  <!-- ENTREVISTAS -->
+  <section id="tab-entrevistas" hidden>
+    <form class="ivform" id="ivForm" autocomplete="off">
+      <label>Empresa<input id="ivEmpresa" required maxlength="80" placeholder="p. ej. Airbus"></label>
+      <label>Puesto<input id="ivPuesto" required maxlength="140" placeholder="p. ej. #XPLORER 2027 Robotics"></label>
+      <label>Fecha<input id="ivFecha" type="date" required></label>
+      <label>Hora<input id="ivHora" type="time"></label>
+      <label>Tipo<select id="ivTipo"><option>Entrevista RR. HH.</option><option>Entrevista técnica</option><option>Prueba técnica / test</option><option>Entrevista final</option><option>Otra</option></select></label>
+      <label>Modalidad<select id="ivModo"><option>Online</option><option>Presencial</option><option>Telefónica</option></select></label>
+      <label class="wide">Notas (lugar, enlace, con quién, qué preparar)<input id="ivNotas" maxlength="400" placeholder="p. ej. Teams · repasar control PID y proyecto BMS"></label>
+      <div class="formbtns wide"><button class="btn primary" type="submit" id="ivSave">Añadir entrevista</button><button class="btn" type="button" id="ivCancel" hidden>Cancelar edición</button><span class="meta" id="ivMsg"></span></div>
+    </form>
+    <div id="ivList"></div>
   </section>
 
   <!-- EMPRESAS -->
@@ -365,6 +392,7 @@ function renderKpis(){
     [(() => { const v = ofertasVisibles().map(o => matchOf(o)?.pct ?? 0).filter(p => p >= 70).length; return v; })(), "Ofertas con match ≥70%"],
     [nuevas, "Nuevas esta semana"],
     [pend.length, "Candidaturas pendientes"],
+    [(() => { const n = (typeof ENTREVISTAS !== "undefined" ? ENTREVISTAS : []).filter(iv => ivWhen(iv) >= new Date()).length; return n; })(), "Entrevistas próximas"],
     [recientes, "Pendientes recientes (≤45 días)"],
   ];
   document.getElementById("kpis").innerHTML = k.map(([n,l]) => `<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
@@ -469,7 +497,7 @@ function renderAll(){ renderKpis(); renderOfertas(); renderCandidaturas(); rende
 /* --- Eventos --- */
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
-  ["ofertas","candidaturas","empresas"].forEach(n => document.getElementById("tab-" + n).hidden = n !== t.dataset.tab);
+  ["ofertas","candidaturas","entrevistas","empresas"].forEach(n => document.getElementById("tab-" + n).hidden = n !== t.dataset.tab);
 }));
 document.getElementById("chipsOf").addEventListener("click", e => {
   const a = e.target.dataset.area; if (!a) return;
@@ -545,8 +573,98 @@ document.getElementById("cvReset").addEventListener("click", () => {
   const msg = document.getElementById("cvMsg"); msg.hidden = false; msg.textContent = "Has vuelto al CV por defecto.";
 });
 
+/* --- Entrevistas (guardadas en la base de datos de la página) --- */
+let ivDb = null, ENTREVISTAS = [], ivLoaded = false, ivEditing = null;
+const ivWhen = iv => new Date(iv.fecha + "T" + (iv.hora || "23:59") + ":00");
+function ivDaysTo(iv){ const t = new Date(); t.setHours(0,0,0,0); return Math.round((new Date(iv.fecha + "T00:00:00") - t) / 864e5); }
+function renderEntrevistas(){
+  const el = document.getElementById("ivList");
+  const now = new Date();
+  const next = ENTREVISTAS.filter(iv => ivWhen(iv) >= now).sort((a,b) => ivWhen(a) - ivWhen(b));
+  const past = ENTREVISTAS.filter(iv => ivWhen(iv) < now).sort((a,b) => ivWhen(b) - ivWhen(a));
+  document.getElementById("c-iv").textContent = next.length;
+  if (!ivDb){
+    el.innerHTML = `<div class="empty">${ivLoaded ? "Las entrevistas solo se pueden guardar abriendo la página desde Claude (claude.ai). En esta copia local no hay dónde guardarlas." : "Cargando entrevistas…"}</div>`;
+    return;
+  }
+  if (!ENTREVISTAS.length){
+    el.innerHTML = `<div class="empty">Todavía no tienes entrevistas. Cuando te citen, añádela con el formulario de arriba y aparecerá aquí con su fecha y la cuenta atrás.</div>`;
+    return;
+  }
+  const card = (iv, isPast) => {
+    const d = new Date(iv.fecha + "T12:00:00");
+    const n = ivDaysTo(iv);
+    const when = isPast ? "Realizada" : n === 0 ? "Hoy" : n === 1 ? "Mañana" : `En ${n} días`;
+    const badge = isPast ? `<span class="badge b-old">${when}</span>` : `<span class="badge ${n <= 3 ? "b-soon" : "b-jr"}">${when}</span>`;
+    return `<article class="card ${isPast ? "past" : ""}">
+      <div class="ivdate">
+        <div class="ivday"><div class="d">${d.getDate()}</div><div class="m">${d.toLocaleDateString("es-ES",{month:"short"})}</div></div>
+        <div style="min-width:0;flex:1"><div class="top"><span class="co">${esc(iv.empresa)}</span>${badge}</div>
+        <h3 class="title">${esc(iv.puesto)}</h3></div>
+      </div>
+      <div class="meta">${d.toLocaleDateString("es-ES",{weekday:"long", day:"numeric", month:"long", year:"numeric"})}${iv.hora ? " · " + esc(iv.hora) + " h" : ""} · ${esc(iv.tipo || "Entrevista")} · ${esc(iv.modo || "")}</div>
+      ${iv.notas ? `<div class="note">${esc(iv.notas)}</div>` : ""}
+      <div class="actions"><button type="button" data-iv-edit="${esc(iv.id)}">Editar</button><button type="button" data-iv-del="${esc(iv.id)}">Eliminar</button></div>
+    </article>`;
+  };
+  el.innerHTML = (next.length ? `<h2 class="section-h">Próximas · ${next.length}</h2><div class="grid">${next.map(iv => card(iv, false)).join("")}</div>` : `<div class="empty">No tienes entrevistas próximas.</div>`)
+    + (past.length ? `<h2 class="section-h">Pasadas · ${past.length}</h2><div class="grid">${past.map(iv => card(iv, true)).join("")}</div>` : "");
+}
+function ivResetForm(){
+  ivEditing = null; document.getElementById("ivForm").reset();
+  document.getElementById("ivSave").textContent = "Añadir entrevista";
+  document.getElementById("ivCancel").hidden = true;
+}
+document.getElementById("ivForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = document.getElementById("ivMsg");
+  if (!ivDb){ msg.textContent = "Abre la página desde Claude para poder guardar entrevistas."; return; }
+  const v = id => document.getElementById(id).value.trim();
+  const body = {empresa:v("ivEmpresa"), puesto:v("ivPuesto"), fecha:v("ivFecha"), hora:v("ivHora"), tipo:v("ivTipo"), modo:v("ivModo"), notas:v("ivNotas"), actualizada:new Date().toISOString()};
+  if (!body.empresa || !body.puesto || !body.fecha){ msg.textContent = "Rellena empresa, puesto y fecha."; return; }
+  const btn = document.getElementById("ivSave"); btn.disabled = true;
+  try {
+    const col = ivDb.collection("entrevistas");
+    await (ivEditing ? col.doc(ivEditing) : col.doc()).set(body);
+    msg.textContent = ivEditing ? "Entrevista actualizada." : "Entrevista guardada.";
+    ivResetForm();
+  } catch (err) {
+    msg.textContent = err && err.code === "quota_exceeded" ? "No queda espacio para más entrevistas: elimina alguna pasada." : "No se ha podido guardar. Inténtalo de nuevo en unos segundos.";
+  } finally { btn.disabled = false; }
+});
+document.getElementById("ivCancel").addEventListener("click", ivResetForm);
+document.getElementById("ivList").addEventListener("click", async e => {
+  const del = e.target.dataset.ivDel, ed = e.target.dataset.ivEdit;
+  if (ed){
+    const iv = ENTREVISTAS.find(x => x.id === ed); if (!iv) return;
+    ivEditing = ed;
+    [["ivEmpresa","empresa"],["ivPuesto","puesto"],["ivFecha","fecha"],["ivHora","hora"],["ivTipo","tipo"],["ivModo","modo"],["ivNotas","notas"]].forEach(([i,k]) => document.getElementById(i).value = iv[k] || "");
+    document.getElementById("ivSave").textContent = "Guardar cambios";
+    document.getElementById("ivCancel").hidden = false;
+    document.getElementById("ivEmpresa").focus();
+  }
+  if (del){
+    if (e.target.dataset.confirm !== "1"){ e.target.dataset.confirm = "1"; e.target.textContent = "¿Seguro? Pulsa otra vez"; return; }
+    try { await ivDb.collection("entrevistas").doc(del).delete(); } catch { document.getElementById("ivMsg").textContent = "No se ha podido eliminar."; }
+  }
+});
+(async () => {
+  let db = null;
+  try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch { db = null; }
+  ivLoaded = true;
+  if (!db){ renderEntrevistas(); return; }
+  ivDb = db;
+  const timer = setTimeout(() => { document.getElementById("ivMsg").textContent = "Las entrevistas tardan en cargar; puede que la lista no esté al día."; }, 10000);
+  db.collection("entrevistas").onSnapshot(snap => {
+    if (!snap.metadata.fromCache){ clearTimeout(timer); }
+    ENTREVISTAS = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    renderEntrevistas(); renderKpis();
+  }, () => { clearTimeout(timer); document.getElementById("ivMsg").textContent = "No se han podido cargar las entrevistas."; });
+  renderEntrevistas();
+})();
+
 document.getElementById("asof").textContent = fmt(AS_OF);
-refreshCV(); renderCV(); applyTheme(); renderChips(); renderAll();
+refreshCV(); renderCV(); applyTheme(); renderChips(); renderAll(); renderEntrevistas();
 </script>
 </body>
 </html>
