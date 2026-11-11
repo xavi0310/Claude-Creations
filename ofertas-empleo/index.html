@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar de Prácticas</title>
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f0f2f5; --text:#16181d; --muted:#5d6472;
+  --border:#e1e4ea; --accent:#2457d6; --accent-soft:#e6edff;
+  --ok:#1f8a4c; --ok-soft:#e3f5ea; --warn:#a86400; --warn-soft:#fff2db;
+  --bad:#b3261e; --bad-soft:#fde7e5; --gray-soft:#eceef2;
+  --radius:12px; --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1115; --surface:#171a21; --surface-2:#1e222b; --text:#e8eaef; --muted:#9aa2b1;
+    --border:#2a2f3a; --accent:#7ea2ff; --accent-soft:#1f2a47;
+    --ok:#5ccf8c; --ok-soft:#173326; --warn:#f0b357; --warn-soft:#3a2c12;
+    --bad:#ff8a80; --bad-soft:#3d1c1a; --gray-soft:#252a34; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115; --surface:#171a21; --surface-2:#1e222b; --text:#e8eaef; --muted:#9aa2b1;
+  --border:#2a2f3a; --accent:#7ea2ff; --accent-soft:#1f2a47;
+  --ok:#5ccf8c; --ok-soft:#173326; --warn:#f0b357; --warn-soft:#3a2c12;
+  --bad:#ff8a80; --bad-soft:#3d1c1a; --gray-soft:#252a34; --shadow:none;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0;font-size:14px}
+.theme-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:22px 0}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.kpi .n{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab{background:none;border:none;color:var(--muted);padding:10px 14px;font-size:15px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.tab .c{background:var(--surface-2);border-radius:999px;padding:1px 8px;font-size:12px;margin-left:6px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input,.toolbar select{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px}
+.toolbar input{flex:1 1 220px;min-width:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chip{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.co{font-size:13px;font-weight:600;color:var(--accent)}
+.title{font-weight:600;font-size:15px;margin:0}
+.meta{color:var(--muted);font-size:13px}
+.tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{background:var(--surface-2);color:var(--muted);font-size:12px;border-radius:6px;padding:1px 7px}
+.badge{font-size:12px;font-weight:600;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.b-pend{background:var(--warn-soft);color:var(--warn)}
+.b-old{background:var(--gray-soft);color:var(--muted)}
+.b-rej{background:var(--bad-soft);color:var(--bad)}
+.b-can{background:var(--gray-soft);color:var(--muted)}
+.b-new{background:var(--ok-soft);color:var(--ok)}
+.b-jr{background:var(--accent-soft);color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.actions a,.actions button{font-size:13px;color:var(--accent);background:none;border:1px solid var(--border);border-radius:7px;padding:4px 10px;text-decoration:none;cursor:pointer}
+.actions a:hover,.actions button:hover{border-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:6px 8px}
+.section-h{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:22px 0 10px;font-weight:600}
+.empty{color:var(--muted);padding:24px;text-align:center;border:1px dashed var(--border);border-radius:var(--radius)}
+.bar{height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+footer{margin-top:40px;color:var(--muted);font-size:12px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Radar de Prácticas · Ing. Electrónica y Automática</h1>
+      <p class="sub">Ofertas de becas y prácticas detectadas en Gmail, estado de tus candidaturas y empresas objetivo. Datos actualizados a <strong id="asof"></strong>.</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button">Tema: auto</button>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="ofertas" aria-selected="true">Ofertas interesantes<span class="c" id="c-ofertas"></span></button>
+    <button class="tab" role="tab" data-tab="candidaturas" aria-selected="false">Mis candidaturas<span class="c" id="c-cand"></span></button>
+    <button class="tab" role="tab" data-tab="empresas" aria-selected="false">Empresas objetivo<span class="c" id="c-emp"></span></button>
+  </nav>
+
+  <!-- OFERTAS -->
+  <section id="tab-ofertas">
+    <div class="toolbar">
+      <input id="qOf" type="search" placeholder="Buscar empresa, puesto, tecnología…">
+      <select id="tipoOf">
+        <option value="">Todos los tipos</option>
+        <option value="beca">Beca / Prácticas</option>
+        <option value="junior">Empleo junior</option>
+      </select>
+    </div>
+    <div class="chips" id="chipsOf"></div>
+    <div class="grid" id="gridOf"></div>
+  </section>
+
+  <!-- CANDIDATURAS -->
+  <section id="tab-candidaturas" hidden>
+    <div class="toolbar">
+      <input id="qCa" type="search" placeholder="Buscar empresa o puesto…">
+      <select id="estCa">
+        <option value="activas">Activas (pendientes)</option>
+        <option value="">Todas</option>
+        <option value="rechazada">Descartadas</option>
+        <option value="cancelada">Canceladas</option>
+      </select>
+    </div>
+    <div id="listCa"></div>
+  </section>
+
+  <!-- EMPRESAS -->
+  <section id="tab-empresas" hidden>
+    <p class="sub" style="margin-bottom:14px">Empresas del sector (electrónica, automática, robótica, energía, aeroespacial) que aparecen en tus correos o encajan con tu perfil. La barra muestra tus candidaturas: <span style="color:var(--warn)">■</span> pendientes · <span style="color:var(--bad)">■</span> descartadas.</p>
+    <div class="grid" id="gridEmp"></div>
+  </section>
+
+  <footer>
+    Fuente: búsqueda en Gmail (alertas de LinkedIn, ARQUIMEA, Sener, Airbus/Workday, ABB, BSH, Clue, Expleo…). Se han excluido ofertas no relacionadas con ingeniería (almacén, ETT, teleoperador).
+    Los estados que marques aquí se guardan solo en este navegador.
+  </footer>
+</div>
+
+<script>
+/* ===================== DATOS (extraídos de Gmail) ===================== */
+const AS_OF = "2026-11-11";
+const gm = id => `https://mail.google.com/mail/u/0/#all/${id}`;
+const li = q => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(q)}&location=Espa%C3%B1a`;
+
+// Ofertas recibidas a las que aún NO has aplicado
+const OFERTAS = [
+  {id:"of-thales", empresa:"Thales", puesto:"Beca / Internship Young Talent Program 2026-2027", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c57075f959dd0", prioridad:3},
+  {id:"of-rwe", empresa:"RWE Renewables Iberia", puesto:"Internship Control Centre Operations", tipo:"beca", areas:["Automática y Control","Energía"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c4b95b18bf71d", prioridad:3},
+  {id:"of-implemental", empresa:"Implemental Systems", puesto:"Beca de Mecatrónica y Robótica (Hardware)", tipo:"beca", areas:["Robótica","Electrónica"], fecha:"2026-11-05", lugar:"Madrid", fuente:"LinkedIn (aparece en 3 alertas)", thread:"1a1abb0a57890563", prioridad:3, nota:"Integración y puesta en marcha de un robot: encaja muy bien con tu perfil de robótica."},
+  {id:"of-sener-hw", empresa:"Sener", puesto:"Beca Ingeniería Hardware", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Tres Cantos / Getafe", fuente:"LinkedIn", thread:"1a187a4233f4e07e", prioridad:2, nota:"Sener descartó 3 candidaturas previas: adapta el CV a hardware/diseño de placas."},
+  {id:"of-acciona", empresa:"ACCIONA", puesto:"Beca de Automatización y Control", tipo:"beca", areas:["Automática y Control"], fecha:"2026-11-01", lugar:"Madrid", fuente:"LinkedIn", thread:"1a196cdf6783c76b", prioridad:3},
+  {id:"of-renault", empresa:"Renault Group", puesto:"Beca en Ingeniería de Procesos – Automatización Industrial", tipo:"beca", areas:["Automática y Control","Robótica"], fecha:"2026-10-24", lugar:"Valladolid / Palencia", fuente:"LinkedIn", thread:"1a16d9b1bda6c3d0", prioridad:2},
+  {id:"of-arq-prod", empresa:"ARQUIMEA", puesto:"Beca Ingeniería de Producción", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Torrejón de Ardoz · Híbrido", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a18802049d8780f", prioridad:2},
+  {id:"of-arq-plan", empresa:"ARQUIMEA", puesto:"Beca Planificación de Producción", tipo:"beca", areas:["Industrial"], fecha:"2026-10-29", lugar:"Torrejón de Ardoz", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a18802049d8780f", prioridad:1},
+  {id:"of-airbus-ia", empresa:"Airbus (Crisa)", puesto:"Prácticas en Desarrollo de Software y Automatización con IA", tipo:"beca", areas:["Software","Aeroespacial y Defensa"], fecha:"2026-10-24", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a16cbf5e4cbf8ca", prioridad:2},
+  {id:"of-sener-egse", empresa:"Sener", puesto:"Desarrollador/a HW Junior para Equipos de Ensayos (EGSEs)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-01", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1966018b522fd9", prioridad:2},
+  {id:"of-airbus-dsp", empresa:"Airbus Defence and Space", puesto:"Microwave Instrument Digital & Signal Processing Engineer (entry-level)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Madrid", fuente:"LinkedIn", thread:"1a186ed03cd5f678", prioridad:2},
+  {id:"of-sener-prodelec", empresa:"Sener", puesto:"Ingeniero/a de Producción Electrónica", tipo:"junior", areas:["Electrónica"], fecha:"2026-11-07", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1b5464585ef31d", prioridad:1},
+  {id:"of-sener-tec", empresa:"Sener", puesto:"Técnico/a de Electrónica para proyectos de Espacio y Defensa", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-05", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1aaf98baf83f3b", prioridad:1},
+  {id:"of-sener-aocs", empresa:"Sener", puesto:"AOCS/GNC Engineer", tipo:"junior", areas:["Automática y Control","Aeroespacial y Defensa"], fecha:"2026-10-31", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a19139be7254de3", prioridad:1, nota:"Control de actitud de satélites: muy de control, aunque suelen pedir experiencia."},
+  {id:"of-sener-eee", empresa:"Sener", puesto:"Ingeniero/a de Componentes EEE y Radiación (Espacio y Defensa)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-30", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a18c813e1ea03ef", prioridad:1},
+  {id:"of-sener-elec", empresa:"Sener", puesto:"Ingeniero/a Eléctrico/a – Proyectos de Energía", tipo:"junior", areas:["Energía"], fecha:"2026-11-11", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c9dfb343e6458", prioridad:1},
+  {id:"of-airbus-mfg", empresa:"Airbus Defence and Space", puesto:"Manufacturing Engineering (Electrical Specialist)", tipo:"junior", areas:["Electrónica","Industrial"], fecha:"2026-11-08", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1ba6c9e056afb2", prioridad:1},
+  {id:"of-airbus-esid", empresa:"Airbus Defence and Space", puesto:"Electrical System Installation Design", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-04", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1a64109d5f7aca", prioridad:1},
+  {id:"of-nertus", empresa:"NERTUS", puesto:"Ingeniero/a RAMS", tipo:"junior", areas:["Industrial"], fecha:"2026-11-02", lugar:"Getafe", fuente:"LinkedIn", thread:"1a19bf4549e69843", prioridad:1},
+];
+
+// Candidaturas enviadas. estado: pendiente | rechazada | cancelada
+const CANDIDATURAS = [
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Training Simulators", fecha:"2026-11-09", estado:"pendiente", areas:["Aeroespacial y Defensa","Software"], thread:"1a1c10b01df83309"},
+  {empresa:"Airbus", puesto:"#Discover I 2027-2028 Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a1ac4db3dfaac67"},
+  {empresa:"ARQUIMEA", puesto:"Verification Engineer Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Electrónica"], thread:"1a1ac4b414fdb169"},
+  {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería de Hardware Electrónico", fecha:"2026-10-22", estado:"pendiente", areas:["Electrónica"], thread:"1a1636c36c922fb4"},
+  {empresa:"EM&E Group", puesto:"Candidatura vía LinkedIn (la empresa ha visto tu solicitud)", fecha:"2026-10-20", estado:"pendiente", areas:["Electrónica"], thread:"1a1592a8e43ca10c", detalle:"Vista por la empresa el 20/10"},
+  {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería Electrónica de Sistemas", fecha:"2026-10-16", estado:"pendiente", areas:["Electrónica"], thread:"1a1448b426e9d6da"},
+  {empresa:"CT Ingenieros", puesto:"CV en portal de empleo (candidatura abierta)", fecha:"2026-10-13", estado:"pendiente", areas:["Industrial"], thread:"1a13436ed922cde6"},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Robotics & Automation", fecha:"2026-10-09", estado:"pendiente", areas:["Robótica","Automática y Control"], thread:"1a11ffb6cec1ac9a"},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 Internship Programme", fecha:"2026-10-09", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a11ffb6cec1ac9a"},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Robotization of an A320 HTP Painting Booth", fecha:"2026-10-06", estado:"pendiente", areas:["Robótica","Automática y Control"], thread:"1a11077384223782"},
+  {empresa:"GRI Renewable Industries", puesto:"Candidatura vía LinkedIn (vista por la empresa)", fecha:"2026-08-26", estado:"pendiente", areas:["Energía"], thread:"1a03ce80cdd1c2de", detalle:"Vista por la empresa el 26/08"},
+  {empresa:"Banco Santander", puesto:"Beca Santander | Ayuda Económica 2026", fecha:"2026-08-11", estado:"pendiente", areas:["Beca económica"], thread:"19ff09535959c950"},
+  {empresa:"SEGULA Technologies", puesto:"Candidatura vía LinkedIn", fecha:"2026-07-30", estado:"pendiente", areas:["Industrial"], thread:"19fb481cd9fa0c75"},
+  {empresa:"Grupo Elecnor", puesto:"Candidatura vía LinkedIn", fecha:"2026-06-04", estado:"pendiente", areas:["Energía"], thread:"19e923f06a24efa4"},
+  {empresa:"Indra Group", puesto:"Candidatura vía LinkedIn", fecha:"2026-06-04", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19e923ba97c4ddd8"},
+  {empresa:"Expleo", puesto:"Ingeniero/a – BECA en Sector Defensa", fecha:"2026-04-25", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19dc45a8c829b5da"},
+
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Protospace (Rapid Prototyping)", fecha:"2026-10-14", estado:"rechazada", resuelta:"2026-11-10", areas:["Aeroespacial y Defensa"], thread:"1a1c56c4206daf1a"},
+  {empresa:"ARQUIMEA", puesto:"Beca Ingeniero/a de Control", fecha:"2026-10-13", estado:"rechazada", resuelta:"2026-10-27", areas:["Automática y Control"], thread:"1a17d3720071792e"},
+  {empresa:"Exceltic", puesto:"Ingeniero/a de Pruebas Junior (Beca) – Sistemas Ferroviarios", fecha:"2026-09-17", estado:"rechazada", resuelta:"2026-10-26", areas:["Electrónica"], thread:"1a17729ec009e7e5"},
+  {empresa:"Sener", puesto:"Beca Ingeniería Automática y Control – Aeroespacial", fecha:"2026-10-06", estado:"rechazada", resuelta:"2026-10-13", areas:["Automática y Control","Aeroespacial y Defensa"], thread:"1a13463e700693f6"},
+  {empresa:"Sener", puesto:"Beca Ingeniería Electrónica – FPGA", fecha:"2026-08-31", estado:"rechazada", resuelta:"2026-09-03", areas:["Electrónica"], thread:"1a0679aab83d32a5"},
+  {empresa:"Sener", puesto:"Beca Ingeniería Eléctrica – Energía del Transporte (Subestaciones)", fecha:"2026-08-25", estado:"rechazada", resuelta:"2026-09-01", areas:["Energía"], thread:"1a05c2bb70ec5aff"},
+  {empresa:"ABB", puesto:"Internship: Electrification / Smart Building / Energy Distribution", fecha:"2026-09-21", estado:"cancelada", resuelta:"2026-10-08", areas:["Energía","Automática y Control"], thread:"1a11daf3ec8dccba", detalle:"ABB canceló la posición"},
+  {empresa:"BSH", puesto:"Prácticas Ingeniería – Inicio Octubre 2026", fecha:"2026-03-23", estado:"rechazada", resuelta:"2026-06-18", areas:["Industrial"], thread:"19edad7417b1c8d2"},
+  {empresa:"Clue Technologies", puesto:"Electronic Internship", fecha:"2026-04-25", estado:"rechazada", resuelta:"2026-05-05", areas:["Electrónica"], thread:"19df8c1979016bfa"},
+  {empresa:"Airbus", puesto:"Técnico de laboratorio (Beca) – Aerospace Innovation", fecha:"2026-05-04", estado:"rechazada", resuelta:"2026-05-04", areas:["Aeroespacial y Defensa"], thread:"19df1fa1cbcaad49", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta"},
+  {empresa:"Indra Group", puesto:"Técnico de pruebas electrónicas y/o radiofrecuencia (San Fernando de Henares)", fecha:"2026-02-19", estado:"rechazada", resuelta:"2026-03-02", areas:["Electrónica"], thread:"19cae8ddf596a4f0"},
+  {empresa:"Airbus", puesto:"#BECA – AHE Mission System Design Internship", fecha:"2026-03-24", estado:"rechazada", resuelta:"2026-03-24", areas:["Aeroespacial y Defensa"], thread:"19d1ffad5ce015f2", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta"},
+  {empresa:"Airbus", puesto:"#Discover I 2026-2027 Internship", fecha:"2026-02-25", estado:"rechazada", resuelta:"2026-02-25", areas:["Aeroespacial y Defensa"], thread:"19c953ce2051c170", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta"},
+];
+
+// Empresas objetivo
+const EMPRESAS = [
+  {nombre:"Airbus / Airbus Defence and Space", clave:"Airbus", sector:"Aeroespacial y Defensa", sedes:"Getafe, Tres Cantos (Crisa), Illescas", porque:"Programas #XPLORER y #Discover de prácticas cada año; aviónica, robótica de fabricación, simuladores.", busqueda:"Airbus internship"},
+  {nombre:"ARQUIMEA", clave:"ARQUIMEA", sector:"Electrónica · Aeroespacial y Defensa", sedes:"Torrejón de Ardoz, Leganés", porque:"Publica muchas becas de electrónica; te envía vacantes que encajan con tu perfil.", busqueda:"ARQUIMEA beca"},
+  {nombre:"Sener", clave:"Sener", sector:"Ingeniería · Espacio · Energía", sedes:"Tres Cantos, Getafe", porque:"Becas de hardware, FPGA, control y energía; muchas alertas en tu bandeja.", busqueda:"Sener beca"},
+  {nombre:"Thales", clave:"Thales", sector:"Defensa · Transporte · Espacio", sedes:"Madrid (Tres Cantos)", porque:"Young Talent Program con becas de ingeniería electrónica y sistemas.", busqueda:"Thales beca"},
+  {nombre:"Indra Group", clave:"Indra Group", sector:"Defensa · Radar · Tráfico aéreo", sedes:"San Fernando de Henares, Torrejón, Alcobendas", porque:"Muy cerca de Alcalá; pruebas electrónicas, RF y sistemas embebidos.", busqueda:"Indra becario ingeniería"},
+  {nombre:"Implemental Systems", clave:"Implemental Systems", sector:"Robótica · Mecatrónica", sedes:"Madrid", porque:"Beca de mecatrónica y robótica con integración real de robots.", busqueda:"Implemental Systems"},
+  {nombre:"ABB", clave:"ABB", sector:"Automatización · Electrificación · Robótica", sedes:"Madrid, Barcelona", porque:"Líder en robótica industrial y PLC; prácticas en electrificación.", busqueda:"ABB internship"},
+  {nombre:"Siemens", clave:"Siemens", sector:"Automatización industrial (PLC, SCADA)", sedes:"Madrid (Tres Cantos, Getafe)", porque:"Referente en TIA Portal/PLC: muy alineado con Automática Industrial.", busqueda:"Siemens becario"},
+  {nombre:"Schneider Electric", clave:"Schneider Electric", sector:"Automatización · Energía", sedes:"Madrid, Barcelona", porque:"Sigues su newsletter; programas de graduados y becas en automatización.", busqueda:"Schneider Electric internship"},
+  {nombre:"ACCIONA", clave:"ACCIONA", sector:"Energía · Infraestructuras", sedes:"Alcobendas", porque:"Beca de Automatización y Control recibida en tus alertas.", busqueda:"ACCIONA beca automatización"},
+  {nombre:"RWE Renewables", clave:"RWE Renewables Iberia", sector:"Energías renovables · Centros de control", sedes:"Madrid", porque:"Prácticas en operación de centro de control (SCADA).", busqueda:"RWE internship"},
+  {nombre:"Renault Group", clave:"Renault Group", sector:"Automoción · Automatización de procesos", sedes:"Valladolid, Palencia", porque:"Becas de automatización industrial en planta.", busqueda:"Renault beca automatización"},
+  {nombre:"BSH Electrodomésticos", clave:"BSH", sector:"Fabricación · Electrónica de consumo", sedes:"Zaragoza, Navarra", porque:"Programa de prácticas de ingeniería con inicio en octubre.", busqueda:"BSH prácticas ingeniería"},
+  {nombre:"Expleo", clave:"Expleo", sector:"Consultoría de ingeniería · Defensa", sedes:"Madrid", porque:"Becas en sector defensa y aeronáutica.", busqueda:"Expleo beca"},
+  {nombre:"Grupo Elecnor", clave:"Grupo Elecnor", sector:"Energía · Instalaciones eléctricas", sedes:"Madrid", porque:"Proyectos eléctricos y de automatización de subestaciones.", busqueda:"Elecnor becario"},
+  {nombre:"GMV", clave:"GMV", sector:"Espacio · Sistemas embebidos", sedes:"Tres Cantos", porque:"Sugerida: GNC, software embebido y sistemas de control para satélites.", busqueda:"GMV becas"},
+];
+
+/* ===================== LÓGICA ===================== */
+const today = new Date(AS_OF + "T12:00:00");
+const daysAgo = d => Math.round((today - new Date(d + "T12:00:00")) / 864e5);
+const fmt = d => new Date(d + "T12:00:00").toLocaleDateString("es-ES", {day:"numeric", month:"short", year:"numeric"});
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STALE_DAYS = 45;
+
+// Estado local (solo en este navegador): ofertas marcadas como solicitadas / descartadas
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem("radar-practicas") || "{}"); } catch { return {}; } },
+  set(v){ try { localStorage.setItem("radar-practicas", JSON.stringify(v)); } catch {} }
+};
+let local = store.get();
+local.aplicadas = local.aplicadas || {};
+local.ocultas = local.ocultas || {};
+
+function allCandidaturas(){
+  const extra = OFERTAS.filter(o => local.aplicadas[o.id]).map(o => ({
+    empresa:o.empresa, puesto:o.puesto, fecha:local.aplicadas[o.id], estado:"pendiente", areas:o.areas, thread:o.thread, detalle:"Marcada como solicitada desde esta página"
+  }));
+  return [...extra, ...CANDIDATURAS];
+}
+function ofertasVisibles(){ return OFERTAS.filter(o => !local.aplicadas[o.id] && !local.ocultas[o.id]); }
+
+function statusBadge(c){
+  if (c.estado === "rechazada") return `<span class="badge b-rej">Descartada</span>`;
+  if (c.estado === "cancelada") return `<span class="badge b-can">Cancelada</span>`;
+  if (daysAgo(c.fecha) > STALE_DAYS) return `<span class="badge b-old">Pendiente · sin noticias</span>`;
+  return `<span class="badge b-pend">Pendiente</span>`;
+}
+
+function renderKpis(){
+  const cands = allCandidaturas();
+  const pend = cands.filter(c => c.estado === "pendiente");
+  const recientes = pend.filter(c => daysAgo(c.fecha) <= STALE_DAYS).length;
+  const rej = cands.filter(c => c.estado === "rechazada").length;
+  const nuevas = ofertasVisibles().filter(o => daysAgo(o.fecha) <= 7).length;
+  const k = [
+    [ofertasVisibles().length, "Ofertas sin solicitar"],
+    [nuevas, "Nuevas esta semana"],
+    [pend.length, "Candidaturas pendientes"],
+    [recientes, "Pendientes recientes (≤45 días)"],
+    [rej, "Descartadas"],
+  ];
+  document.getElementById("kpis").innerHTML = k.map(([n,l]) => `<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  document.getElementById("c-ofertas").textContent = ofertasVisibles().length;
+  document.getElementById("c-cand").textContent = pend.length;
+  document.getElementById("c-emp").textContent = EMPRESAS.length;
+}
+
+/* --- Ofertas --- */
+const AREAS = [...new Set(OFERTAS.flatMap(o => o.areas))].sort();
+let areaSel = new Set();
+function renderChips(){
+  document.getElementById("chipsOf").innerHTML = AREAS.map(a =>
+    `<button class="chip" type="button" data-area="${esc(a)}" aria-pressed="${areaSel.has(a)}">${esc(a)}</button>`).join("");
+}
+function renderOfertas(){
+  const q = document.getElementById("qOf").value.trim().toLowerCase();
+  const tipo = document.getElementById("tipoOf").value;
+  const list = ofertasVisibles()
+    .filter(o => !tipo || o.tipo === tipo)
+    .filter(o => !areaSel.size || o.areas.some(a => areaSel.has(a)))
+    .filter(o => !q || [o.empresa,o.puesto,o.lugar,o.areas.join(" "),o.nota||""].join(" ").toLowerCase().includes(q))
+    .sort((a,b) => (a.tipo === b.tipo ? 0 : a.tipo === "beca" ? -1 : 1) || b.prioridad - a.prioridad || b.fecha.localeCompare(a.fecha));
+  const grid = document.getElementById("gridOf");
+  if (!list.length){ grid.innerHTML = `<div class="empty">No hay ofertas con esos filtros.</div>`; return; }
+  grid.innerHTML = list.map(o => {
+    const nueva = daysAgo(o.fecha) <= 7 ? `<span class="badge b-new">Nueva</span>` : "";
+    const tipo = o.tipo === "beca" ? `<span class="badge b-pend" style="background:var(--ok-soft);color:var(--ok)">Beca</span>` : `<span class="badge b-jr">Junior</span>`;
+    const stars = "★".repeat(o.prioridad) + "☆".repeat(3 - o.prioridad);
+    return `<article class="card">
+      <div class="top"><span class="co">${esc(o.empresa)}</span><span style="display:flex;gap:4px">${nueva}${tipo}</span></div>
+      <h3 class="title">${esc(o.puesto)}</h3>
+      <div class="meta">${esc(o.lugar)} · ${fmt(o.fecha)} · ${esc(o.fuente)}</div>
+      <div class="tags">${o.areas.map(a => `<span class="tag">${esc(a)}</span>`).join("")}<span class="tag" title="Encaje con tu perfil">${stars}</span></div>
+      ${o.nota ? `<div class="note">${esc(o.nota)}</div>` : ""}
+      <div class="actions">
+        <a href="${gm(o.thread)}" target="_blank" rel="noopener">Ver correo</a>
+        <a href="${li(o.empresa + " " + o.puesto)}" target="_blank" rel="noopener">Buscar oferta</a>
+        <button type="button" data-apply="${o.id}">Ya la he solicitado</button>
+        <button type="button" data-hide="${o.id}">Descartar</button>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+/* --- Candidaturas --- */
+function renderCandidaturas(){
+  const q = document.getElementById("qCa").value.trim().toLowerCase();
+  const est = document.getElementById("estCa").value;
+  const list = allCandidaturas()
+    .filter(c => !q || (c.empresa + " " + c.puesto).toLowerCase().includes(q))
+    .filter(c => est === "activas" ? c.estado === "pendiente" : (!est || c.estado === est))
+    .sort((a,b) => b.fecha.localeCompare(a.fecha));
+  const el = document.getElementById("listCa");
+  if (!list.length){ el.innerHTML = `<div class="empty">Nada por aquí.</div>`; return; }
+  const groups = est === "activas"
+    ? [["En proceso (últimos 45 días)", list.filter(c => daysAgo(c.fecha) <= STALE_DAYS)], ["Sin noticias desde hace más de 45 días", list.filter(c => daysAgo(c.fecha) > STALE_DAYS)]]
+    : [["", list]];
+  el.innerHTML = groups.filter(([,g]) => g.length).map(([h,g]) => `
+    ${h ? `<h2 class="section-h">${h} · ${g.length}</h2>` : ""}
+    <div class="grid">${g.map(c => `
+      <article class="card">
+        <div class="top"><span class="co">${esc(c.empresa)}</span>${statusBadge(c)}</div>
+        <h3 class="title">${esc(c.puesto)}</h3>
+        <div class="meta">Solicitada: ${fmt(c.fecha)} (hace ${daysAgo(c.fecha)} días)${c.resuelta ? ` · Respuesta: ${fmt(c.resuelta)}` : ""}</div>
+        <div class="tags">${c.areas.map(a => `<span class="tag">${esc(a)}</span>`).join("")}</div>
+        ${c.detalle ? `<div class="note">${esc(c.detalle)}</div>` : ""}
+        <div class="actions"><a href="${gm(c.thread)}" target="_blank" rel="noopener">Ver correo</a></div>
+      </article>`).join("")}
+    </div>`).join("");
+}
+
+/* --- Empresas --- */
+function renderEmpresas(){
+  const cands = allCandidaturas();
+  document.getElementById("gridEmp").innerHTML = EMPRESAS.map(e => {
+    const mine = cands.filter(c => c.empresa.startsWith(e.clave.split(" ")[0]));
+    const p = mine.filter(c => c.estado === "pendiente").length;
+    const r = mine.filter(c => c.estado !== "pendiente").length;
+    const abiertas = ofertasVisibles().filter(o => o.empresa.startsWith(e.clave.split(" ")[0])).length;
+    const tot = Math.max(p + r, 1);
+    return `<article class="card">
+      <div class="top"><h3 class="title">${esc(e.nombre)}</h3>${abiertas ? `<span class="badge b-new">${abiertas} oferta${abiertas>1?"s":""}</span>` : ""}</div>
+      <div class="meta">${esc(e.sector)} · ${esc(e.sedes)}</div>
+      <div style="font-size:14px">${esc(e.porque)}</div>
+      <div class="meta">Tus candidaturas: ${p} pendiente${p!==1?"s":""} · ${r} cerrada${r!==1?"s":""}</div>
+      <div class="bar"><span style="width:${p/tot*100}%;background:var(--warn)"></span><span style="width:${r/tot*100}%;background:var(--bad)"></span></div>
+      <div class="actions"><a href="${li(e.busqueda)}" target="_blank" rel="noopener">Ver ofertas en LinkedIn</a></div>
+    </article>`;
+  }).join("");
+}
+
+function renderAll(){ renderKpis(); renderOfertas(); renderCandidaturas(); renderEmpresas(); }
+
+/* --- Eventos --- */
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  ["ofertas","candidaturas","empresas"].forEach(n => document.getElementById("tab-" + n).hidden = n !== t.dataset.tab);
+}));
+document.getElementById("chipsOf").addEventListener("click", e => {
+  const a = e.target.dataset.area; if (!a) return;
+  areaSel.has(a) ? areaSel.delete(a) : areaSel.add(a);
+  renderChips(); renderOfertas();
+});
+["qOf","tipoOf"].forEach(id => document.getElementById(id).addEventListener("input", renderOfertas));
+["qCa","estCa"].forEach(id => document.getElementById(id).addEventListener("input", renderCandidaturas));
+document.getElementById("gridOf").addEventListener("click", e => {
+  const ap = e.target.dataset.apply, hd = e.target.dataset.hide;
+  if (ap) local.aplicadas[ap] = new Date().toISOString().slice(0,10);
+  if (hd) local.ocultas[hd] = true;
+  if (ap || hd){ store.set(local); renderAll(); }
+});
+
+// Tema
+const themes = ["auto","light","dark"];
+let th = (() => { try { return localStorage.getItem("radar-theme") || "auto"; } catch { return "auto"; } })();
+function applyTheme(){
+  if (th === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", th);
+  document.getElementById("themeBtn").textContent = "Tema: " + ({auto:"auto",light:"claro",dark:"oscuro"})[th];
+}
+document.getElementById("themeBtn").addEventListener("click", () => {
+  th = themes[(themes.indexOf(th) + 1) % 3];
+  try { localStorage.setItem("radar-theme", th); } catch {}
+  applyTheme();
+});
+
+document.getElementById("asof").textContent = fmt(AS_OF);
+applyTheme(); renderChips(); renderAll();
+</script>
+</body>
+</html>
