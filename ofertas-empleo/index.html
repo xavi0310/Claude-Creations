@@ -159,7 +159,6 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
       <select id="estCa">
         <option value="activas">Activas (pendientes)</option>
         <option value="">Todas</option>
-        <option value="rechazada">Descartadas</option>
         <option value="cancelada">Canceladas</option>
       </select>
     </div>
@@ -168,7 +167,7 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 
   <!-- EMPRESAS -->
   <section id="tab-empresas" hidden>
-    <p class="sub" style="margin-bottom:14px">Empresas del sector (electrónica, automática, robótica, energía, aeroespacial) que aparecen en tus correos o encajan con tu perfil. La barra muestra tus candidaturas: <span style="color:var(--warn)">■</span> pendientes · <span style="color:var(--bad)">■</span> descartadas.</p>
+    <p class="sub" style="margin-bottom:14px">Empresas del sector (electrónica, automática, robótica, energía, aeroespacial) que aparecen en tus correos o encajan con tu perfil. La barra muestra tus candidaturas: <span style="color:var(--warn)">■</span> pendientes · <span style="color:var(--bad)">■</span> cerradas (canceladas). Las candidaturas rechazadas se eliminan automáticamente.</p>
     <div class="grid" id="gridEmp"></div>
   </section>
 
@@ -191,7 +190,7 @@ const OFERTAS = [
   {id:"of-thales", empresa:"Thales", puesto:"Beca / Internship Young Talent Program 2026-2027", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c57075f959dd0", prioridad:3, req:["grado","ingles","analog","digital","embedded","test","aero"]},
   {id:"of-rwe", empresa:"RWE Renewables Iberia", puesto:"Internship Control Centre Operations", tipo:"beca", areas:["Automática y Control","Energía"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c4b95b18bf71d", prioridad:3, req:["grado","ingles","control","scada","electrica","energia"]},
   {id:"of-implemental", empresa:"Implemental Systems", puesto:"Beca de Mecatrónica y Robótica (Hardware)", tipo:"beca", areas:["Robótica","Electrónica"], fecha:"2026-11-05", lugar:"Madrid", fuente:"LinkedIn (aparece en 3 alertas)", thread:"1a1abb0a57890563", prioridad:3, nota:"Integración y puesta en marcha de un robot: encaja muy bien con tu perfil de robótica.", req:["grado","robot","embedded","sensores","pcb","c","mecanica"]},
-  {id:"of-sener-hw", empresa:"Sener", puesto:"Beca Ingeniería Hardware", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Tres Cantos / Getafe", fuente:"LinkedIn", thread:"1a187a4233f4e07e", prioridad:2, nota:"Sener descartó 3 candidaturas previas: adapta el CV a hardware/diseño de placas.", req:["grado","ingles","analog","digital","pcb","simul","test","aero"]},
+  {id:"of-sener-hw", empresa:"Sener", puesto:"Beca Ingeniería Hardware", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Tres Cantos / Getafe", fuente:"LinkedIn", thread:"1a187a4233f4e07e", prioridad:2, nota:"Adapta el CV a hardware/diseño de placas (KiCad, simulación).", req:["grado","ingles","analog","digital","pcb","simul","test","aero"]},
   {id:"of-acciona", empresa:"ACCIONA", puesto:"Beca de Automatización y Control", tipo:"beca", areas:["Automática y Control"], fecha:"2026-11-01", lugar:"Madrid", fuente:"LinkedIn", thread:"1a196cdf6783c76b", prioridad:3, req:["grado","plc","control","scada","electrica","energia"]},
   {id:"of-renault", empresa:"Renault Group", puesto:"Beca en Ingeniería de Procesos – Automatización Industrial", tipo:"beca", areas:["Automática y Control","Robótica"], fecha:"2026-10-24", lugar:"Valladolid / Palencia", fuente:"LinkedIn", thread:"1a16d9b1bda6c3d0", prioridad:2, req:["grado","plc","robot","lean","control"]},
   {id:"of-arq-prod", empresa:"ARQUIMEA", puesto:"Beca Ingeniería de Producción", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Torrejón de Ardoz · Híbrido", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a18802049d8780f", prioridad:2, req:["grado","lean","test","calidad","pcb","aero"]},
@@ -209,7 +208,7 @@ const OFERTAS = [
   {id:"of-nertus", empresa:"NERTUS", puesto:"Ingeniero/a RAMS", tipo:"junior", areas:["Industrial"], fecha:"2026-11-02", lugar:"Getafe", fuente:"LinkedIn", thread:"1a19bf4549e69843", prioridad:1, req:["grado","calidad","ingles","test"]},
 ];
 
-// Candidaturas enviadas. estado: pendiente | rechazada | cancelada
+// Candidaturas enviadas. estado: pendiente | cancelada. Las rechazadas se eliminan (no se guardan).
 const CANDIDATURAS = [
   {empresa:"Airbus", puesto:"#XPLORER 2027 – Training Simulators", fecha:"2026-11-09", estado:"pendiente", areas:["Aeroespacial y Defensa","Software"], thread:"1a1c10b01df83309", req:["grado","ingles","c","cpp","matlab","aero"]},
   {empresa:"Airbus", puesto:"#Discover I 2027-2028 Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a1ac4db3dfaac67", req:["grado","ingles","aero","equipo"]},
@@ -228,19 +227,7 @@ const CANDIDATURAS = [
   {empresa:"Indra Group", puesto:"Candidatura vía LinkedIn", fecha:"2026-06-04", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19e923ba97c4ddd8", req:["grado","ingles","aero","test"]},
   {empresa:"Expleo", puesto:"Ingeniero/a – BECA en Sector Defensa", fecha:"2026-04-25", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19dc45a8c829b5da", req:["grado","ingles","aero","test"]},
 
-  {empresa:"Airbus", puesto:"#XPLORER 2027 – Protospace (Rapid Prototyping)", fecha:"2026-10-14", estado:"rechazada", resuelta:"2026-11-10", areas:["Aeroespacial y Defensa"], thread:"1a1c56c4206daf1a", req:["grado","ingles","mecanica","embedded","aero"]},
-  {empresa:"ARQUIMEA", puesto:"Beca Ingeniero/a de Control", fecha:"2026-10-13", estado:"rechazada", resuelta:"2026-10-27", areas:["Automática y Control"], thread:"1a17d3720071792e", req:["grado","control","matlab","aero"]},
-  {empresa:"Exceltic", puesto:"Ingeniero/a de Pruebas Junior (Beca) – Sistemas Ferroviarios", fecha:"2026-09-17", estado:"rechazada", resuelta:"2026-10-26", areas:["Electrónica"], thread:"1a17729ec009e7e5", req:["grado","test","electrica"]},
-  {empresa:"Sener", puesto:"Beca Ingeniería Automática y Control – Aeroespacial", fecha:"2026-10-06", estado:"rechazada", resuelta:"2026-10-13", areas:["Automática y Control","Aeroespacial y Defensa"], thread:"1a13463e700693f6", req:["grado","control","matlab","ingles","aero"]},
-  {empresa:"Sener", puesto:"Beca Ingeniería Electrónica – FPGA", fecha:"2026-08-31", estado:"rechazada", resuelta:"2026-09-03", areas:["Electrónica"], thread:"1a0679aab83d32a5", req:["grado","fpga","digital","ingles"]},
-  {empresa:"Sener", puesto:"Beca Ingeniería Eléctrica – Energía del Transporte (Subestaciones)", fecha:"2026-08-25", estado:"rechazada", resuelta:"2026-09-01", areas:["Energía"], thread:"1a05c2bb70ec5aff", req:["grado","electrica","energia","eplan"]},
   {empresa:"ABB", puesto:"Internship: Electrification / Smart Building / Energy Distribution", fecha:"2026-09-21", estado:"cancelada", resuelta:"2026-10-08", areas:["Energía","Automática y Control"], thread:"1a11daf3ec8dccba", detalle:"ABB canceló la posición", req:["grado","electrica","energia","plc","ingles"]},
-  {empresa:"BSH", puesto:"Prácticas Ingeniería – Inicio Octubre 2026", fecha:"2026-03-23", estado:"rechazada", resuelta:"2026-06-18", areas:["Industrial"], thread:"19edad7417b1c8d2", req:["grado","lean","calidad"]},
-  {empresa:"Clue Technologies", puesto:"Electronic Internship", fecha:"2026-04-25", estado:"rechazada", resuelta:"2026-05-05", areas:["Electrónica"], thread:"19df8c1979016bfa", req:["grado","analog","digital","pcb","embedded"]},
-  {empresa:"Airbus", puesto:"Técnico de laboratorio (Beca) – Aerospace Innovation", fecha:"2026-05-04", estado:"rechazada", resuelta:"2026-05-04", areas:["Aeroespacial y Defensa"], thread:"19df1fa1cbcaad49", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta", req:["grado","test","ingles","aero"]},
-  {empresa:"Indra Group", puesto:"Técnico de pruebas electrónicas y/o radiofrecuencia (San Fernando de Henares)", fecha:"2026-02-19", estado:"rechazada", resuelta:"2026-03-02", areas:["Electrónica"], thread:"19cae8ddf596a4f0", req:["grado","rf","test","analog"]},
-  {empresa:"Airbus", puesto:"#BECA – AHE Mission System Design Internship", fecha:"2026-03-24", estado:"rechazada", resuelta:"2026-03-24", areas:["Aeroespacial y Defensa"], thread:"19d1ffad5ce015f2", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta", req:["grado","ingles","aero","matlab"]},
-  {empresa:"Airbus", puesto:"#Discover I 2026-2027 Internship", fecha:"2026-02-25", estado:"rechazada", resuelta:"2026-02-25", areas:["Aeroespacial y Defensa"], thread:"19c953ce2051c170", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta", req:["grado","ingles","aero"]},
 ];
 
 // Empresas objetivo
@@ -363,7 +350,6 @@ function allCandidaturas(){
 function ofertasVisibles(){ return OFERTAS.filter(o => !local.aplicadas[o.id] && !local.ocultas[o.id]); }
 
 function statusBadge(c){
-  if (c.estado === "rechazada") return `<span class="badge b-rej">Descartada</span>`;
   if (c.estado === "cancelada") return `<span class="badge b-can">Cancelada</span>`;
   if (daysAgo(c.fecha) > STALE_DAYS) return `<span class="badge b-old">Pendiente · sin noticias</span>`;
   return `<span class="badge b-pend">Pendiente</span>`;
@@ -373,7 +359,6 @@ function renderKpis(){
   const cands = allCandidaturas();
   const pend = cands.filter(c => c.estado === "pendiente");
   const recientes = pend.filter(c => daysAgo(c.fecha) <= STALE_DAYS).length;
-  const rej = cands.filter(c => c.estado === "rechazada").length;
   const nuevas = ofertasVisibles().filter(o => daysAgo(o.fecha) <= 7).length;
   const k = [
     [ofertasVisibles().length, "Ofertas sin solicitar"],
@@ -381,7 +366,6 @@ function renderKpis(){
     [nuevas, "Nuevas esta semana"],
     [pend.length, "Candidaturas pendientes"],
     [recientes, "Pendientes recientes (≤45 días)"],
-    [rej, "Descartadas"],
   ];
   document.getElementById("kpis").innerHTML = k.map(([n,l]) => `<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
   document.getElementById("c-ofertas").textContent = ofertasVisibles().length;
