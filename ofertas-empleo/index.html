@@ -70,6 +70,29 @@ h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
 .empty{color:var(--muted);padding:24px;text-align:center;border:1px dashed var(--border);border-radius:var(--radius)}
 .bar{height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden;display:flex}
 .bar span{display:block;height:100%}
+.cvpanel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.cvpanel .info{min-width:0;flex:1 1 260px}
+.cvpanel .info strong{display:block}
+.cvpanel .btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-size:13px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:focus-visible,.chip:focus-visible,.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cvpaste{width:100%;display:flex;flex-direction:column;gap:8px}
+.cvpaste textarea{width:100%;min-height:120px;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font:13px/1.4 inherit;resize:vertical}
+.cvmsg{font-size:13px;color:var(--muted);width:100%}
+.match{display:flex;align-items:center;gap:8px;font-size:13px}
+.match .pct{font-weight:700;font-variant-numeric:tabular-nums;min-width:3.2em}
+.match .mbar{flex:1;height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+.match .mbar span{display:block;height:100%;border-radius:999px}
+.m-hi{color:var(--ok)} .m-hi-bg{background:var(--ok)}
+.m-mid{color:var(--warn)} .m-mid-bg{background:var(--warn)}
+.m-lo{color:var(--bad)} .m-lo-bg{background:var(--bad)}
+details.req{font-size:12px}
+details.req summary{cursor:pointer;color:var(--muted)}
+.reqs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.rq{border-radius:6px;padding:1px 7px;font-size:12px}
+.rq.y{background:var(--ok-soft);color:var(--ok)}
+.rq.n{background:var(--gray-soft);color:var(--muted);text-decoration:line-through;text-decoration-color:transparent}
 footer{margin-top:40px;color:var(--muted);font-size:12px}
 [hidden]{display:none!important}
 </style>
@@ -86,6 +109,24 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 
   <section class="kpis" id="kpis"></section>
 
+  <section class="cvpanel" aria-label="Tu CV">
+    <div class="info">
+      <strong>Tu CV para el matching</strong>
+      <span class="meta" id="cvStatus"></span>
+    </div>
+    <div class="btns">
+      <label class="btn primary" for="cvFile">Subir CV (PDF o .txt)</label>
+      <input id="cvFile" type="file" accept=".pdf,.txt,application/pdf,text/plain" hidden>
+      <button class="btn" type="button" id="cvPasteBtn">Pegar texto</button>
+      <button class="btn" type="button" id="cvReset" hidden>Volver al CV por defecto</button>
+    </div>
+    <div class="cvpaste" id="cvPasteBox" hidden>
+      <textarea id="cvText" placeholder="Pega aquí el texto de tu CV…"></textarea>
+      <div class="btns"><button class="btn primary" type="button" id="cvPasteSave">Usar este texto</button><button class="btn" type="button" id="cvPasteCancel">Cancelar</button></div>
+    </div>
+    <div class="cvmsg" id="cvMsg" hidden></div>
+  </section>
+
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="ofertas" aria-selected="true">Ofertas interesantes<span class="c" id="c-ofertas"></span></button>
     <button class="tab" role="tab" data-tab="candidaturas" aria-selected="false">Mis candidaturas<span class="c" id="c-cand"></span></button>
@@ -100,6 +141,11 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
         <option value="">Todos los tipos</option>
         <option value="beca">Beca / Prácticas</option>
         <option value="junior">Empleo junior</option>
+      </select>
+      <select id="ordOf">
+        <option value="match">Ordenar por matching</option>
+        <option value="tipo">Becas primero</option>
+        <option value="fecha">Más recientes</option>
       </select>
     </div>
     <div class="chips" id="chipsOf"></div>
@@ -128,10 +174,12 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 
   <footer>
     Fuente: búsqueda en Gmail (alertas de LinkedIn, ARQUIMEA, Sener, Airbus/Workday, ABB, BSH, Clue, Expleo…). Se han excluido ofertas no relacionadas con ingeniería (almacén, ETT, teleoperador).
-    Los estados que marques aquí se guardan solo en este navegador.
+    Los estados que marques aquí y el CV que subas se guardan solo en este navegador. Los requisitos de cada oferta son una estimación a partir del puesto y del anuncio; revisa la oferta completa antes de aplicar.
   </footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
 /* ===================== DATOS (extraídos de Gmail) ===================== */
 const AS_OF = "2026-11-11";
@@ -140,59 +188,59 @@ const li = q => `https://www.linkedin.com/jobs/search/?keywords=${encodeURICompo
 
 // Ofertas recibidas a las que aún NO has aplicado
 const OFERTAS = [
-  {id:"of-thales", empresa:"Thales", puesto:"Beca / Internship Young Talent Program 2026-2027", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c57075f959dd0", prioridad:3},
-  {id:"of-rwe", empresa:"RWE Renewables Iberia", puesto:"Internship Control Centre Operations", tipo:"beca", areas:["Automática y Control","Energía"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c4b95b18bf71d", prioridad:3},
-  {id:"of-implemental", empresa:"Implemental Systems", puesto:"Beca de Mecatrónica y Robótica (Hardware)", tipo:"beca", areas:["Robótica","Electrónica"], fecha:"2026-11-05", lugar:"Madrid", fuente:"LinkedIn (aparece en 3 alertas)", thread:"1a1abb0a57890563", prioridad:3, nota:"Integración y puesta en marcha de un robot: encaja muy bien con tu perfil de robótica."},
-  {id:"of-sener-hw", empresa:"Sener", puesto:"Beca Ingeniería Hardware", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Tres Cantos / Getafe", fuente:"LinkedIn", thread:"1a187a4233f4e07e", prioridad:2, nota:"Sener descartó 3 candidaturas previas: adapta el CV a hardware/diseño de placas."},
-  {id:"of-acciona", empresa:"ACCIONA", puesto:"Beca de Automatización y Control", tipo:"beca", areas:["Automática y Control"], fecha:"2026-11-01", lugar:"Madrid", fuente:"LinkedIn", thread:"1a196cdf6783c76b", prioridad:3},
-  {id:"of-renault", empresa:"Renault Group", puesto:"Beca en Ingeniería de Procesos – Automatización Industrial", tipo:"beca", areas:["Automática y Control","Robótica"], fecha:"2026-10-24", lugar:"Valladolid / Palencia", fuente:"LinkedIn", thread:"1a16d9b1bda6c3d0", prioridad:2},
-  {id:"of-arq-prod", empresa:"ARQUIMEA", puesto:"Beca Ingeniería de Producción", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Torrejón de Ardoz · Híbrido", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a18802049d8780f", prioridad:2},
-  {id:"of-arq-plan", empresa:"ARQUIMEA", puesto:"Beca Planificación de Producción", tipo:"beca", areas:["Industrial"], fecha:"2026-10-29", lugar:"Torrejón de Ardoz", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a18802049d8780f", prioridad:1},
-  {id:"of-airbus-ia", empresa:"Airbus (Crisa)", puesto:"Prácticas en Desarrollo de Software y Automatización con IA", tipo:"beca", areas:["Software","Aeroespacial y Defensa"], fecha:"2026-10-24", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a16cbf5e4cbf8ca", prioridad:2},
-  {id:"of-sener-egse", empresa:"Sener", puesto:"Desarrollador/a HW Junior para Equipos de Ensayos (EGSEs)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-01", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1966018b522fd9", prioridad:2},
-  {id:"of-airbus-dsp", empresa:"Airbus Defence and Space", puesto:"Microwave Instrument Digital & Signal Processing Engineer (entry-level)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Madrid", fuente:"LinkedIn", thread:"1a186ed03cd5f678", prioridad:2},
-  {id:"of-sener-prodelec", empresa:"Sener", puesto:"Ingeniero/a de Producción Electrónica", tipo:"junior", areas:["Electrónica"], fecha:"2026-11-07", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1b5464585ef31d", prioridad:1},
-  {id:"of-sener-tec", empresa:"Sener", puesto:"Técnico/a de Electrónica para proyectos de Espacio y Defensa", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-05", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1aaf98baf83f3b", prioridad:1},
-  {id:"of-sener-aocs", empresa:"Sener", puesto:"AOCS/GNC Engineer", tipo:"junior", areas:["Automática y Control","Aeroespacial y Defensa"], fecha:"2026-10-31", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a19139be7254de3", prioridad:1, nota:"Control de actitud de satélites: muy de control, aunque suelen pedir experiencia."},
-  {id:"of-sener-eee", empresa:"Sener", puesto:"Ingeniero/a de Componentes EEE y Radiación (Espacio y Defensa)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-30", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a18c813e1ea03ef", prioridad:1},
-  {id:"of-sener-elec", empresa:"Sener", puesto:"Ingeniero/a Eléctrico/a – Proyectos de Energía", tipo:"junior", areas:["Energía"], fecha:"2026-11-11", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c9dfb343e6458", prioridad:1},
-  {id:"of-airbus-mfg", empresa:"Airbus Defence and Space", puesto:"Manufacturing Engineering (Electrical Specialist)", tipo:"junior", areas:["Electrónica","Industrial"], fecha:"2026-11-08", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1ba6c9e056afb2", prioridad:1},
-  {id:"of-airbus-esid", empresa:"Airbus Defence and Space", puesto:"Electrical System Installation Design", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-04", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1a64109d5f7aca", prioridad:1},
-  {id:"of-nertus", empresa:"NERTUS", puesto:"Ingeniero/a RAMS", tipo:"junior", areas:["Industrial"], fecha:"2026-11-02", lugar:"Getafe", fuente:"LinkedIn", thread:"1a19bf4549e69843", prioridad:1},
+  {id:"of-thales", empresa:"Thales", puesto:"Beca / Internship Young Talent Program 2026-2027", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c57075f959dd0", prioridad:3, req:["grado","ingles","analog","digital","embedded","test","aero"]},
+  {id:"of-rwe", empresa:"RWE Renewables Iberia", puesto:"Internship Control Centre Operations", tipo:"beca", areas:["Automática y Control","Energía"], fecha:"2026-11-10", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c4b95b18bf71d", prioridad:3, req:["grado","ingles","control","scada","electrica","energia"]},
+  {id:"of-implemental", empresa:"Implemental Systems", puesto:"Beca de Mecatrónica y Robótica (Hardware)", tipo:"beca", areas:["Robótica","Electrónica"], fecha:"2026-11-05", lugar:"Madrid", fuente:"LinkedIn (aparece en 3 alertas)", thread:"1a1abb0a57890563", prioridad:3, nota:"Integración y puesta en marcha de un robot: encaja muy bien con tu perfil de robótica.", req:["grado","robot","embedded","sensores","pcb","c","mecanica"]},
+  {id:"of-sener-hw", empresa:"Sener", puesto:"Beca Ingeniería Hardware", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Tres Cantos / Getafe", fuente:"LinkedIn", thread:"1a187a4233f4e07e", prioridad:2, nota:"Sener descartó 3 candidaturas previas: adapta el CV a hardware/diseño de placas.", req:["grado","ingles","analog","digital","pcb","simul","test","aero"]},
+  {id:"of-acciona", empresa:"ACCIONA", puesto:"Beca de Automatización y Control", tipo:"beca", areas:["Automática y Control"], fecha:"2026-11-01", lugar:"Madrid", fuente:"LinkedIn", thread:"1a196cdf6783c76b", prioridad:3, req:["grado","plc","control","scada","electrica","energia"]},
+  {id:"of-renault", empresa:"Renault Group", puesto:"Beca en Ingeniería de Procesos – Automatización Industrial", tipo:"beca", areas:["Automática y Control","Robótica"], fecha:"2026-10-24", lugar:"Valladolid / Palencia", fuente:"LinkedIn", thread:"1a16d9b1bda6c3d0", prioridad:2, req:["grado","plc","robot","lean","control"]},
+  {id:"of-arq-prod", empresa:"ARQUIMEA", puesto:"Beca Ingeniería de Producción", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Torrejón de Ardoz · Híbrido", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a18802049d8780f", prioridad:2, req:["grado","lean","test","calidad","pcb","aero"]},
+  {id:"of-arq-plan", empresa:"ARQUIMEA", puesto:"Beca Planificación de Producción", tipo:"beca", areas:["Industrial"], fecha:"2026-10-29", lugar:"Torrejón de Ardoz", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a18802049d8780f", prioridad:1, req:["grado","lean","calidad","ingles"]},
+  {id:"of-airbus-ia", empresa:"Airbus (Crisa)", puesto:"Prácticas en Desarrollo de Software y Automatización con IA", tipo:"beca", areas:["Software","Aeroespacial y Defensa"], fecha:"2026-10-24", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a16cbf5e4cbf8ca", prioridad:2, req:["grado","ingles","python","ia","c","linux"]},
+  {id:"of-sener-egse", empresa:"Sener", puesto:"Desarrollador/a HW Junior para Equipos de Ensayos (EGSEs)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-01", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1966018b522fd9", prioridad:2, req:["grado","ingles","analog","digital","pcb","test","embedded","aero"]},
+  {id:"of-airbus-dsp", empresa:"Airbus Defence and Space", puesto:"Microwave Instrument Digital & Signal Processing Engineer (entry-level)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-29", lugar:"Madrid", fuente:"LinkedIn", thread:"1a186ed03cd5f678", prioridad:2, req:["grado","ingles","dsp","rf","fpga","matlab","aero"]},
+  {id:"of-sener-prodelec", empresa:"Sener", puesto:"Ingeniero/a de Producción Electrónica", tipo:"junior", areas:["Electrónica"], fecha:"2026-11-07", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1b5464585ef31d", prioridad:1, req:["grado","lean","pcb","test","calidad"]},
+  {id:"of-sener-tec", empresa:"Sener", puesto:"Técnico/a de Electrónica para proyectos de Espacio y Defensa", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-05", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1aaf98baf83f3b", prioridad:1, req:["analog","digital","test","pcb","aero"]},
+  {id:"of-sener-aocs", empresa:"Sener", puesto:"AOCS/GNC Engineer", tipo:"junior", areas:["Automática y Control","Aeroespacial y Defensa"], fecha:"2026-10-31", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a19139be7254de3", prioridad:1, nota:"Control de actitud de satélites: muy de control, aunque suelen pedir experiencia.", req:["grado","ingles","control","matlab","aero"]},
+  {id:"of-sener-eee", empresa:"Sener", puesto:"Ingeniero/a de Componentes EEE y Radiación (Espacio y Defensa)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-10-30", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a18c813e1ea03ef", prioridad:1, req:["grado","ingles","analog","calidad","test","aero"]},
+  {id:"of-sener-elec", empresa:"Sener", puesto:"Ingeniero/a Eléctrico/a – Proyectos de Energía", tipo:"junior", areas:["Energía"], fecha:"2026-11-11", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1c9dfb343e6458", prioridad:1, req:["grado","electrica","eplan","energia","ingles"]},
+  {id:"of-airbus-mfg", empresa:"Airbus Defence and Space", puesto:"Manufacturing Engineering (Electrical Specialist)", tipo:"junior", areas:["Electrónica","Industrial"], fecha:"2026-11-08", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1ba6c9e056afb2", prioridad:1, req:["grado","ingles","electrica","eplan","lean","aero"]},
+  {id:"of-airbus-esid", empresa:"Airbus Defence and Space", puesto:"Electrical System Installation Design", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-04", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1a64109d5f7aca", prioridad:1, req:["grado","ingles","electrica","eplan","mecanica","aero"]},
+  {id:"of-nertus", empresa:"NERTUS", puesto:"Ingeniero/a RAMS", tipo:"junior", areas:["Industrial"], fecha:"2026-11-02", lugar:"Getafe", fuente:"LinkedIn", thread:"1a19bf4549e69843", prioridad:1, req:["grado","calidad","ingles","test"]},
 ];
 
 // Candidaturas enviadas. estado: pendiente | rechazada | cancelada
 const CANDIDATURAS = [
-  {empresa:"Airbus", puesto:"#XPLORER 2027 – Training Simulators", fecha:"2026-11-09", estado:"pendiente", areas:["Aeroespacial y Defensa","Software"], thread:"1a1c10b01df83309"},
-  {empresa:"Airbus", puesto:"#Discover I 2027-2028 Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a1ac4db3dfaac67"},
-  {empresa:"ARQUIMEA", puesto:"Verification Engineer Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Electrónica"], thread:"1a1ac4b414fdb169"},
-  {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería de Hardware Electrónico", fecha:"2026-10-22", estado:"pendiente", areas:["Electrónica"], thread:"1a1636c36c922fb4"},
-  {empresa:"EM&E Group", puesto:"Candidatura vía LinkedIn (la empresa ha visto tu solicitud)", fecha:"2026-10-20", estado:"pendiente", areas:["Electrónica"], thread:"1a1592a8e43ca10c", detalle:"Vista por la empresa el 20/10"},
-  {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería Electrónica de Sistemas", fecha:"2026-10-16", estado:"pendiente", areas:["Electrónica"], thread:"1a1448b426e9d6da"},
-  {empresa:"CT Ingenieros", puesto:"CV en portal de empleo (candidatura abierta)", fecha:"2026-10-13", estado:"pendiente", areas:["Industrial"], thread:"1a13436ed922cde6"},
-  {empresa:"Airbus", puesto:"#XPLORER 2027 – Robotics & Automation", fecha:"2026-10-09", estado:"pendiente", areas:["Robótica","Automática y Control"], thread:"1a11ffb6cec1ac9a"},
-  {empresa:"Airbus", puesto:"#XPLORER 2027 Internship Programme", fecha:"2026-10-09", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a11ffb6cec1ac9a"},
-  {empresa:"Airbus", puesto:"#XPLORER 2027 – Robotization of an A320 HTP Painting Booth", fecha:"2026-10-06", estado:"pendiente", areas:["Robótica","Automática y Control"], thread:"1a11077384223782"},
-  {empresa:"GRI Renewable Industries", puesto:"Candidatura vía LinkedIn (vista por la empresa)", fecha:"2026-08-26", estado:"pendiente", areas:["Energía"], thread:"1a03ce80cdd1c2de", detalle:"Vista por la empresa el 26/08"},
-  {empresa:"Banco Santander", puesto:"Beca Santander | Ayuda Económica 2026", fecha:"2026-08-11", estado:"pendiente", areas:["Beca económica"], thread:"19ff09535959c950"},
-  {empresa:"SEGULA Technologies", puesto:"Candidatura vía LinkedIn", fecha:"2026-07-30", estado:"pendiente", areas:["Industrial"], thread:"19fb481cd9fa0c75"},
-  {empresa:"Grupo Elecnor", puesto:"Candidatura vía LinkedIn", fecha:"2026-06-04", estado:"pendiente", areas:["Energía"], thread:"19e923f06a24efa4"},
-  {empresa:"Indra Group", puesto:"Candidatura vía LinkedIn", fecha:"2026-06-04", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19e923ba97c4ddd8"},
-  {empresa:"Expleo", puesto:"Ingeniero/a – BECA en Sector Defensa", fecha:"2026-04-25", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19dc45a8c829b5da"},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Training Simulators", fecha:"2026-11-09", estado:"pendiente", areas:["Aeroespacial y Defensa","Software"], thread:"1a1c10b01df83309", req:["grado","ingles","c","cpp","matlab","aero"]},
+  {empresa:"Airbus", puesto:"#Discover I 2027-2028 Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a1ac4db3dfaac67", req:["grado","ingles","aero","equipo"]},
+  {empresa:"ARQUIMEA", puesto:"Verification Engineer Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Electrónica"], thread:"1a1ac4b414fdb169", req:["grado","ingles","test","digital","fpga","embedded"]},
+  {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería de Hardware Electrónico", fecha:"2026-10-22", estado:"pendiente", areas:["Electrónica"], thread:"1a1636c36c922fb4", req:["grado","analog","digital","pcb","simul","test"]},
+  {empresa:"EM&E Group", puesto:"Candidatura vía LinkedIn (la empresa ha visto tu solicitud)", fecha:"2026-10-20", estado:"pendiente", areas:["Electrónica"], thread:"1a1592a8e43ca10c", detalle:"Vista por la empresa el 20/10", req:["grado","analog","digital","test"]},
+  {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería Electrónica de Sistemas", fecha:"2026-10-16", estado:"pendiente", areas:["Electrónica"], thread:"1a1448b426e9d6da", req:["grado","analog","digital","test","ingles","aero"]},
+  {empresa:"CT Ingenieros", puesto:"CV en portal de empleo (candidatura abierta)", fecha:"2026-10-13", estado:"pendiente", areas:["Industrial"], thread:"1a13436ed922cde6", req:["grado","electrica","eplan"]},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Robotics & Automation", fecha:"2026-10-09", estado:"pendiente", areas:["Robótica","Automática y Control"], thread:"1a11ffb6cec1ac9a", req:["grado","ingles","robot","plc","control"]},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 Internship Programme", fecha:"2026-10-09", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a11ffb6cec1ac9a", req:["grado","ingles","aero"]},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Robotization of an A320 HTP Painting Booth", fecha:"2026-10-06", estado:"pendiente", areas:["Robótica","Automática y Control"], thread:"1a11077384223782", req:["grado","ingles","robot","plc","control","mecanica"]},
+  {empresa:"GRI Renewable Industries", puesto:"Candidatura vía LinkedIn (vista por la empresa)", fecha:"2026-08-26", estado:"pendiente", areas:["Energía"], thread:"1a03ce80cdd1c2de", detalle:"Vista por la empresa el 26/08", req:["grado","energia","lean","calidad"]},
+  {empresa:"Banco Santander", puesto:"Beca Santander | Ayuda Económica 2026", fecha:"2026-08-11", estado:"pendiente", areas:["Beca económica"], thread:"19ff09535959c950", req:["grado"]},
+  {empresa:"SEGULA Technologies", puesto:"Candidatura vía LinkedIn", fecha:"2026-07-30", estado:"pendiente", areas:["Industrial"], thread:"19fb481cd9fa0c75", req:["grado","ingles","mecanica","electrica"]},
+  {empresa:"Grupo Elecnor", puesto:"Candidatura vía LinkedIn", fecha:"2026-06-04", estado:"pendiente", areas:["Energía"], thread:"19e923f06a24efa4", req:["grado","electrica","energia","eplan"]},
+  {empresa:"Indra Group", puesto:"Candidatura vía LinkedIn", fecha:"2026-06-04", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19e923ba97c4ddd8", req:["grado","ingles","aero","test"]},
+  {empresa:"Expleo", puesto:"Ingeniero/a – BECA en Sector Defensa", fecha:"2026-04-25", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"19dc45a8c829b5da", req:["grado","ingles","aero","test"]},
 
-  {empresa:"Airbus", puesto:"#XPLORER 2027 – Protospace (Rapid Prototyping)", fecha:"2026-10-14", estado:"rechazada", resuelta:"2026-11-10", areas:["Aeroespacial y Defensa"], thread:"1a1c56c4206daf1a"},
-  {empresa:"ARQUIMEA", puesto:"Beca Ingeniero/a de Control", fecha:"2026-10-13", estado:"rechazada", resuelta:"2026-10-27", areas:["Automática y Control"], thread:"1a17d3720071792e"},
-  {empresa:"Exceltic", puesto:"Ingeniero/a de Pruebas Junior (Beca) – Sistemas Ferroviarios", fecha:"2026-09-17", estado:"rechazada", resuelta:"2026-10-26", areas:["Electrónica"], thread:"1a17729ec009e7e5"},
-  {empresa:"Sener", puesto:"Beca Ingeniería Automática y Control – Aeroespacial", fecha:"2026-10-06", estado:"rechazada", resuelta:"2026-10-13", areas:["Automática y Control","Aeroespacial y Defensa"], thread:"1a13463e700693f6"},
-  {empresa:"Sener", puesto:"Beca Ingeniería Electrónica – FPGA", fecha:"2026-08-31", estado:"rechazada", resuelta:"2026-09-03", areas:["Electrónica"], thread:"1a0679aab83d32a5"},
-  {empresa:"Sener", puesto:"Beca Ingeniería Eléctrica – Energía del Transporte (Subestaciones)", fecha:"2026-08-25", estado:"rechazada", resuelta:"2026-09-01", areas:["Energía"], thread:"1a05c2bb70ec5aff"},
-  {empresa:"ABB", puesto:"Internship: Electrification / Smart Building / Energy Distribution", fecha:"2026-09-21", estado:"cancelada", resuelta:"2026-10-08", areas:["Energía","Automática y Control"], thread:"1a11daf3ec8dccba", detalle:"ABB canceló la posición"},
-  {empresa:"BSH", puesto:"Prácticas Ingeniería – Inicio Octubre 2026", fecha:"2026-03-23", estado:"rechazada", resuelta:"2026-06-18", areas:["Industrial"], thread:"19edad7417b1c8d2"},
-  {empresa:"Clue Technologies", puesto:"Electronic Internship", fecha:"2026-04-25", estado:"rechazada", resuelta:"2026-05-05", areas:["Electrónica"], thread:"19df8c1979016bfa"},
-  {empresa:"Airbus", puesto:"Técnico de laboratorio (Beca) – Aerospace Innovation", fecha:"2026-05-04", estado:"rechazada", resuelta:"2026-05-04", areas:["Aeroespacial y Defensa"], thread:"19df1fa1cbcaad49", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta"},
-  {empresa:"Indra Group", puesto:"Técnico de pruebas electrónicas y/o radiofrecuencia (San Fernando de Henares)", fecha:"2026-02-19", estado:"rechazada", resuelta:"2026-03-02", areas:["Electrónica"], thread:"19cae8ddf596a4f0"},
-  {empresa:"Airbus", puesto:"#BECA – AHE Mission System Design Internship", fecha:"2026-03-24", estado:"rechazada", resuelta:"2026-03-24", areas:["Aeroespacial y Defensa"], thread:"19d1ffad5ce015f2", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta"},
-  {empresa:"Airbus", puesto:"#Discover I 2026-2027 Internship", fecha:"2026-02-25", estado:"rechazada", resuelta:"2026-02-25", areas:["Aeroespacial y Defensa"], thread:"19c953ce2051c170", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta"},
+  {empresa:"Airbus", puesto:"#XPLORER 2027 – Protospace (Rapid Prototyping)", fecha:"2026-10-14", estado:"rechazada", resuelta:"2026-11-10", areas:["Aeroespacial y Defensa"], thread:"1a1c56c4206daf1a", req:["grado","ingles","mecanica","embedded","aero"]},
+  {empresa:"ARQUIMEA", puesto:"Beca Ingeniero/a de Control", fecha:"2026-10-13", estado:"rechazada", resuelta:"2026-10-27", areas:["Automática y Control"], thread:"1a17d3720071792e", req:["grado","control","matlab","aero"]},
+  {empresa:"Exceltic", puesto:"Ingeniero/a de Pruebas Junior (Beca) – Sistemas Ferroviarios", fecha:"2026-09-17", estado:"rechazada", resuelta:"2026-10-26", areas:["Electrónica"], thread:"1a17729ec009e7e5", req:["grado","test","electrica"]},
+  {empresa:"Sener", puesto:"Beca Ingeniería Automática y Control – Aeroespacial", fecha:"2026-10-06", estado:"rechazada", resuelta:"2026-10-13", areas:["Automática y Control","Aeroespacial y Defensa"], thread:"1a13463e700693f6", req:["grado","control","matlab","ingles","aero"]},
+  {empresa:"Sener", puesto:"Beca Ingeniería Electrónica – FPGA", fecha:"2026-08-31", estado:"rechazada", resuelta:"2026-09-03", areas:["Electrónica"], thread:"1a0679aab83d32a5", req:["grado","fpga","digital","ingles"]},
+  {empresa:"Sener", puesto:"Beca Ingeniería Eléctrica – Energía del Transporte (Subestaciones)", fecha:"2026-08-25", estado:"rechazada", resuelta:"2026-09-01", areas:["Energía"], thread:"1a05c2bb70ec5aff", req:["grado","electrica","energia","eplan"]},
+  {empresa:"ABB", puesto:"Internship: Electrification / Smart Building / Energy Distribution", fecha:"2026-09-21", estado:"cancelada", resuelta:"2026-10-08", areas:["Energía","Automática y Control"], thread:"1a11daf3ec8dccba", detalle:"ABB canceló la posición", req:["grado","electrica","energia","plc","ingles"]},
+  {empresa:"BSH", puesto:"Prácticas Ingeniería – Inicio Octubre 2026", fecha:"2026-03-23", estado:"rechazada", resuelta:"2026-06-18", areas:["Industrial"], thread:"19edad7417b1c8d2", req:["grado","lean","calidad"]},
+  {empresa:"Clue Technologies", puesto:"Electronic Internship", fecha:"2026-04-25", estado:"rechazada", resuelta:"2026-05-05", areas:["Electrónica"], thread:"19df8c1979016bfa", req:["grado","analog","digital","pcb","embedded"]},
+  {empresa:"Airbus", puesto:"Técnico de laboratorio (Beca) – Aerospace Innovation", fecha:"2026-05-04", estado:"rechazada", resuelta:"2026-05-04", areas:["Aeroespacial y Defensa"], thread:"19df1fa1cbcaad49", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta", req:["grado","test","ingles","aero"]},
+  {empresa:"Indra Group", puesto:"Técnico de pruebas electrónicas y/o radiofrecuencia (San Fernando de Henares)", fecha:"2026-02-19", estado:"rechazada", resuelta:"2026-03-02", areas:["Electrónica"], thread:"19cae8ddf596a4f0", req:["grado","rf","test","analog"]},
+  {empresa:"Airbus", puesto:"#BECA – AHE Mission System Design Internship", fecha:"2026-03-24", estado:"rechazada", resuelta:"2026-03-24", areas:["Aeroespacial y Defensa"], thread:"19d1ffad5ce015f2", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta", req:["grado","ingles","aero","matlab"]},
+  {empresa:"Airbus", puesto:"#Discover I 2026-2027 Internship", fecha:"2026-02-25", estado:"rechazada", resuelta:"2026-02-25", areas:["Aeroespacial y Defensa"], thread:"19c953ce2051c170", detalle:"Fecha de solicitud no localizada; se muestra la de la respuesta", req:["grado","ingles","aero"]},
 ];
 
 // Empresas objetivo
@@ -215,6 +263,56 @@ const EMPRESAS = [
   {nombre:"GMV", clave:"GMV", sector:"Espacio · Sistemas embebidos", sedes:"Tres Cantos", porque:"Sugerida: GNC, software embebido y sistemas de control para satélites.", busqueda:"GMV becas"},
 ];
 
+// Requisitos: cada oferta lista ids de esta tabla. "t" son términos que se buscan en el texto del CV
+// (en minúsculas y sin tildes); "w" es el peso (1 por defecto; grado e inglés pesan 0,5 porque casi todas las ofertas los piden). Los requisitos de cada oferta están estimados a partir del puesto y del anuncio.
+const SKILLS = {
+  grado:{l:"Grado en Ing. Electrónica / Industrial", w:0.5, t:["ingenieria en electronica","ingenieria electronica","automatica industrial","ingenieria industrial","ingegneria elettronica","telecomunicacion"]},
+  ingles:{l:"Inglés (B2+)", w:0.5, t:["ingles","english","c1","b2"]},
+  analog:{l:"Electrónica analógica", t:["analogic","analog"]},
+  digital:{l:"Electrónica digital", t:["digital"]},
+  pcb:{l:"Diseño de PCB", t:["kicad","altium","orcad","pcb","eagle"]},
+  simul:{l:"Simulación de circuitos (SPICE)", t:["ltspice","spice","circuit simulation"]},
+  fpga:{l:"FPGA / VHDL", t:["fpga","vhdl","verilog"]},
+  embedded:{l:"Microcontroladores / embebidos", t:["keil","microcontrol","stm32","arduino","embebid","esp32","pic"]},
+  c:{l:"Programación en C", re:/(^|[^a-z0-9+#])c([,;/ ]|$)/},
+  cpp:{l:"C++", t:["c++"]},
+  python:{l:"Python", t:["python"]},
+  matlab:{l:"MATLAB / Simulink", t:["matlab","simulink"]},
+  control:{l:"Sistemas de control", t:["sistemas de control","control automatico","regulacion automatica","teoria de control"]},
+  robot:{l:"Robótica industrial", t:["robotica","robotstudio","rapid","robot"]},
+  plc:{l:"PLC / automatización", t:["plc","tia portal","step 7","codesys","automata programable","siemens s7"]},
+  scada:{l:"SCADA / HMI", t:["scada","hmi","wincc"]},
+  potencia:{l:"Electrónica de potencia", t:["electronica de potencia","convertidor"]},
+  sensores:{l:"Sensores e instrumentación", t:["sensor","instrumentacion"]},
+  electrica:{l:"Sistemas eléctricos / alta tensión", t:["instalaciones electricas","baja tension","media tension","sistemas electricos","cuadros electricos","subestacion"]},
+  eplan:{l:"Esquemas eléctricos (EPLAN / AutoCAD)", t:["eplan","autocad"]},
+  baterias:{l:"Baterías / BMS", t:["bms","bateria"]},
+  test:{l:"Pruebas y verificación", t:["verificacion","pruebas","testing","ensayo","validacion"]},
+  rf:{l:"Radiofrecuencia / microondas", t:["radiofrecuencia","microondas","antena"]},
+  dsp:{l:"Procesado de señal", t:["procesado de senal","procesamiento de senal","dsp","signal processing"]},
+  linux:{l:"Linux", t:["linux"]},
+  mecanica:{l:"CAD mecánico (SolidWorks / CATIA)", t:["solidworks","catia","inventor","fusion 360","cad 3d"]},
+  calidad:{l:"Calidad / fiabilidad (RAMS, ISO)", t:["rams","fiabilidad","iso 9001","calidad"]},
+  lean:{l:"Producción / Lean manufacturing", t:["lean","produccion industrial","fabricacion","manufactur"]},
+  ia:{l:"IA / automatización con IA", t:["inteligencia artificial","machine learning","prompting","claudeai"," ia:"]},
+  equipo:{l:"Trabajo en equipo", t:["trabajo en equipo","equipos multidisciplinares"]},
+  aero:{l:"Interés en aeroespacial / defensa", t:["aeroespacial","defensa","aeronautic"]},
+  energia:{l:"Energía / renovables", t:["sector energetico","energias renovables","renovable","subestacion","electrificacion","fotovoltaic","eolic"]},
+};
+
+// CV por defecto: competencias del CV ATS de noviembre de 2026 (sin datos de contacto).
+const DEFAULT_CV = {nombre:"CV_ATS_Xavier_Chantada.pdf (noviembre 2026)", texto:`Estudiante de último curso de Ingeniería en Electrónica y Automática Industrial.
+Experiencia en simulación, diseño y verificación de circuitos electrónicos analógicos y digitales además de conocimientos en sistemas de control y robótica industrial. Busco prácticas de ingeniería en el sector de defensa o aeroespacial.
+Áreas de especialización: Electrónica de Potencia, Sensores, Sistemas de Control y Robótica Industrial.
+Software de simulación y diseño: LTSpice, MATLAB, KiCad, ABB RobotStudio, Keil µVision.
+Lenguajes de programación: C, RAPID.
+Certificaciones: Persona sensibilizada para vehículos con sistemas de alta tensión (Nivel S), Circuit Simulation Onramp (MathWorks), EPLAN Education Fundamentals.
+Ofimática: Microsoft Office (Excel y Word), herramientas de Google. IA: optimización del prompting, creación de skills (ClaudeAI).
+Trabajo en equipo, adaptabilidad, proactividad, comunicación con equipos multidisciplinares.
+Electric Vehicle Team Member — UAH Motorsport: sistemas de gestión de baterías (BMS) y sistemas de seguridad del vehículo eléctrico de competición.
+Grado en Ingeniería en Electrónica y Automática Industrial (UAH, 2027). Erasmus: Laurea in Ingegneria Elettronica e Automatica Industriale (Università di Firenze).
+Idiomas: Español nativo, Inglés C1 (Aptis ESOL, British Council).`};
+
 /* ===================== LÓGICA ===================== */
 const today = new Date(AS_OF + "T12:00:00");
 const daysAgo = d => Math.round((today - new Date(d + "T12:00:00")) / 864e5);
@@ -231,9 +329,34 @@ let local = store.get();
 local.aplicadas = local.aplicadas || {};
 local.ocultas = local.ocultas || {};
 
+const norm = t => String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+function activeCV(){ return local.cv && local.cv.texto ? local.cv : DEFAULT_CV; }
+let cvNorm = "";
+function refreshCV(){ cvNorm = " " + norm(activeCV().texto).replace(/\s+/g, " ") + " "; }
+function hasSkill(id){
+  const k = SKILLS[id]; if (!k) return false;
+  if (k.re) return k.re.test(cvNorm);
+  return k.t.some(term => cvNorm.includes(norm(term)));
+}
+function matchOf(item){
+  const req = item.req || [];
+  if (!req.length) return null;
+  const yes = req.filter(hasSkill), no = req.filter(r => !hasSkill(r));
+  const w = id => (SKILLS[id] && SKILLS[id].w) || 1;
+  const tot = req.reduce((a, r) => a + w(r), 0), got = yes.reduce((a, r) => a + w(r), 0);
+  return {pct: Math.round(got / tot * 100), yes, no};
+}
+function matchHTML(item){
+  const m = matchOf(item); if (!m) return "";
+  const cls = m.pct >= 70 ? "m-hi" : m.pct >= 45 ? "m-mid" : "m-lo";
+  const chip = (id, ok) => `<span class="rq ${ok ? "y" : "n"}">${ok ? "✓" : "✗"} ${esc(SKILLS[id] ? SKILLS[id].l : id)}</span>`;
+  return `<div class="match" title="Requisitos cumplidos según tu CV"><span class="pct ${cls}">${m.pct}%</span><span class="mbar"><span class="${cls}-bg" style="width:${m.pct}%"></span></span><span class="meta">match CV</span></div>
+    <details class="req"><summary>${m.yes.length} de ${m.yes.length + m.no.length} requisitos en tu CV</summary><div class="reqs">${m.yes.map(r => chip(r, true)).join("")}${m.no.map(r => chip(r, false)).join("")}</div></details>`;
+}
+
 function allCandidaturas(){
   const extra = OFERTAS.filter(o => local.aplicadas[o.id]).map(o => ({
-    empresa:o.empresa, puesto:o.puesto, fecha:local.aplicadas[o.id], estado:"pendiente", areas:o.areas, thread:o.thread, detalle:"Marcada como solicitada desde esta página"
+    empresa:o.empresa, puesto:o.puesto, fecha:local.aplicadas[o.id], estado:"pendiente", areas:o.areas, req:o.req, thread:o.thread, detalle:"Marcada como solicitada desde esta página"
   }));
   return [...extra, ...CANDIDATURAS];
 }
@@ -254,6 +377,7 @@ function renderKpis(){
   const nuevas = ofertasVisibles().filter(o => daysAgo(o.fecha) <= 7).length;
   const k = [
     [ofertasVisibles().length, "Ofertas sin solicitar"],
+    [(() => { const v = ofertasVisibles().map(o => matchOf(o)?.pct ?? 0).filter(p => p >= 70).length; return v; })(), "Ofertas con match ≥70%"],
     [nuevas, "Nuevas esta semana"],
     [pend.length, "Candidaturas pendientes"],
     [recientes, "Pendientes recientes (≤45 días)"],
@@ -279,7 +403,12 @@ function renderOfertas(){
     .filter(o => !tipo || o.tipo === tipo)
     .filter(o => !areaSel.size || o.areas.some(a => areaSel.has(a)))
     .filter(o => !q || [o.empresa,o.puesto,o.lugar,o.areas.join(" "),o.nota||""].join(" ").toLowerCase().includes(q))
-    .sort((a,b) => (a.tipo === b.tipo ? 0 : a.tipo === "beca" ? -1 : 1) || b.prioridad - a.prioridad || b.fecha.localeCompare(a.fecha));
+    .sort((a,b) => {
+      const ord = document.getElementById("ordOf").value;
+      if (ord === "match") return (matchOf(b)?.pct ?? 0) - (matchOf(a)?.pct ?? 0) || b.prioridad - a.prioridad || b.fecha.localeCompare(a.fecha);
+      if (ord === "fecha") return b.fecha.localeCompare(a.fecha);
+      return (a.tipo === b.tipo ? 0 : a.tipo === "beca" ? -1 : 1) || b.prioridad - a.prioridad || b.fecha.localeCompare(a.fecha);
+    });
   const grid = document.getElementById("gridOf");
   if (!list.length){ grid.innerHTML = `<div class="empty">No hay ofertas con esos filtros.</div>`; return; }
   grid.innerHTML = list.map(o => {
@@ -291,6 +420,7 @@ function renderOfertas(){
       <h3 class="title">${esc(o.puesto)}</h3>
       <div class="meta">${esc(o.lugar)} · ${fmt(o.fecha)} · ${esc(o.fuente)}</div>
       <div class="tags">${o.areas.map(a => `<span class="tag">${esc(a)}</span>`).join("")}<span class="tag" title="Encaje con tu perfil">${stars}</span></div>
+      ${matchHTML(o)}
       ${o.nota ? `<div class="note">${esc(o.nota)}</div>` : ""}
       <div class="actions">
         <a href="${gm(o.thread)}" target="_blank" rel="noopener">Ver correo</a>
@@ -323,6 +453,7 @@ function renderCandidaturas(){
         <h3 class="title">${esc(c.puesto)}</h3>
         <div class="meta">Solicitada: ${fmt(c.fecha)} (hace ${daysAgo(c.fecha)} días)${c.resuelta ? ` · Respuesta: ${fmt(c.resuelta)}` : ""}</div>
         <div class="tags">${c.areas.map(a => `<span class="tag">${esc(a)}</span>`).join("")}</div>
+        ${matchHTML(c)}
         ${c.detalle ? `<div class="note">${esc(c.detalle)}</div>` : ""}
         <div class="actions"><a href="${gm(c.thread)}" target="_blank" rel="noopener">Ver correo</a></div>
       </article>`).join("")}
@@ -361,7 +492,7 @@ document.getElementById("chipsOf").addEventListener("click", e => {
   areaSel.has(a) ? areaSel.delete(a) : areaSel.add(a);
   renderChips(); renderOfertas();
 });
-["qOf","tipoOf"].forEach(id => document.getElementById(id).addEventListener("input", renderOfertas));
+["qOf","tipoOf","ordOf"].forEach(id => document.getElementById(id).addEventListener("input", renderOfertas));
 ["qCa","estCa"].forEach(id => document.getElementById(id).addEventListener("input", renderCandidaturas));
 document.getElementById("gridOf").addEventListener("click", e => {
   const ap = e.target.dataset.apply, hd = e.target.dataset.hide;
@@ -384,8 +515,54 @@ document.getElementById("themeBtn").addEventListener("click", () => {
   applyTheme();
 });
 
+/* --- CV --- */
+function renderCV(){
+  const cv = activeCV();
+  const custom = cv !== DEFAULT_CV;
+  document.getElementById("cvStatus").textContent = (custom ? "Usando: " : "Usando el CV por defecto: ") + cv.nombre + (cv.fecha ? " · subido el " + fmt(cv.fecha) : "") + ". El matching compara tu CV con los requisitos estimados de cada oferta.";
+  document.getElementById("cvReset").hidden = !custom;
+}
+function setCV(nombre, texto){
+  const t = String(texto || "").trim();
+  const msg = document.getElementById("cvMsg");
+  if (t.length < 80){ msg.hidden = false; msg.textContent = "No he podido leer suficiente texto del CV. Si es un PDF escaneado (imagen), usa «Pegar texto»."; return; }
+  local.cv = {nombre, texto:t, fecha:new Date().toISOString().slice(0,10)};
+  store.set(local); refreshCV(); renderCV(); renderAll();
+  msg.hidden = false; msg.textContent = "CV cargado: " + nombre + ". Porcentajes de matching recalculados.";
+}
+async function pdfToText(file){
+  if (!window.pdfjsLib) throw new Error("no-pdfjs");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  let out = "";
+  for (let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    out += tc.items.map(it => it.str).join(" ") + "\n";
+  }
+  return out;
+}
+document.getElementById("cvFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const msg = document.getElementById("cvMsg"); msg.hidden = false; msg.textContent = "Leyendo " + f.name + "…";
+  try {
+    const isPdf = /\.pdf$/i.test(f.name) || f.type === "application/pdf";
+    setCV(f.name, isPdf ? await pdfToText(f) : await f.text());
+  } catch (err) {
+    msg.textContent = "No he podido leer el archivo" + (String(err.message) === "no-pdfjs" ? " (el lector de PDF necesita conexión a internet)" : "") + ". Prueba con «Pegar texto».";
+  }
+  e.target.value = "";
+});
+document.getElementById("cvPasteBtn").addEventListener("click", () => { document.getElementById("cvPasteBox").hidden = false; document.getElementById("cvText").focus(); });
+document.getElementById("cvPasteCancel").addEventListener("click", () => { document.getElementById("cvPasteBox").hidden = true; });
+document.getElementById("cvPasteSave").addEventListener("click", () => { setCV("Texto pegado", document.getElementById("cvText").value); document.getElementById("cvPasteBox").hidden = true; });
+document.getElementById("cvReset").addEventListener("click", () => {
+  delete local.cv; store.set(local); refreshCV(); renderCV(); renderAll();
+  const msg = document.getElementById("cvMsg"); msg.hidden = false; msg.textContent = "Has vuelto al CV por defecto.";
+});
+
 document.getElementById("asof").textContent = fmt(AS_OF);
-applyTheme(); renderChips(); renderAll();
+refreshCV(); renderCV(); applyTheme(); renderChips(); renderAll();
 </script>
 </body>
 </html>
