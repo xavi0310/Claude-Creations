@@ -212,7 +212,7 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
 /* ===================== DATOS (extraídos de Gmail) ===================== */
-const AS_OF = "2026-11-12";
+const AS_OF = "2026-11-14";
 const gm = id => `https://mail.google.com/mail/u/0/#all/${id}`;
 const li = q => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(q)}&location=Espa%C3%B1a`;
 
@@ -238,6 +238,12 @@ const OFERTAS = [
   {id:"of-airbus-esid", empresa:"Airbus Defence and Space", puesto:"Electrical System Installation Design", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-04", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1a64109d5f7aca", prioridad:1, req:["grado","ingles","electrica","eplan","mecanica","aero"]},
   {id:"of-airbus-tcl", empresa:"Airbus Defence and Space", puesto:"Tactical Communications Lab Test Engineer", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-11", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1ca4d9479fe5b9", prioridad:2, req:["grado","ingles","test","analog","digital","rf","aero"]},
   {id:"of-nertus", empresa:"NERTUS", puesto:"Ingeniero/a RAMS", tipo:"junior", areas:["Industrial"], fecha:"2026-11-02", lugar:"Getafe", fuente:"LinkedIn", thread:"1a19bf4549e69843", prioridad:1, req:["grado","calidad","ingles","test"]},
+  {id:"of-emye-sis", empresa:"EM&E Group", puesto:"Beca Ingeniero/a Sistemas – Ingeniería Telecomunicaciones", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-13", lugar:"Alcalá de Henares", fuente:"LinkedIn", thread:"1a1d42c6d89705e4", prioridad:3, nota:"En tu ciudad. Ya tienes una candidatura previa con EM&E.", req:["grado","ingles","digital","rf","test","aero"]},
+  {id:"of-idom-elec", empresa:"IDOM", puesto:"Beca Ingeniería Eléctrica", tipo:"beca", areas:["Energía"], fecha:"2026-11-13", lugar:"Madrid", fuente:"LinkedIn", thread:"1a1d42c6d89705e4", prioridad:2, req:["grado","ingles","electrica","eplan","energia"]},
+  {id:"of-adi-pai", empresa:"Analog Devices", puesto:"Product Applications Intern", tipo:"beca", areas:["Electrónica"], fecha:"2026-11-13", lugar:"Valencia", fuente:"LinkedIn", thread:"1a1d42c6d89705e4", prioridad:2, req:["grado","ingles","analog","digital","pcb","test"]},
+  {id:"of-segula-emb", empresa:"SEGULA Technologies", puesto:"Prácticas Sistemas Embarcados", tipo:"beca", areas:["Electrónica","Software"], fecha:"2026-11-13", lugar:"Zaragoza", fuente:"LinkedIn", thread:"1a1d42c6d89705e4", prioridad:2, req:["grado","ingles","embedded","c","digital","test"]},
+  {id:"of-airbus-tssi", empresa:"Airbus Defence and Space", puesto:"Test Support System Integrator", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-12", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1cf73e960c4350", prioridad:1, req:["grado","ingles","test","digital","embedded","aero"]},
+  {id:"of-sener-swee", empresa:"Sener", puesto:"Ingenieros/as Software Equipos Electrónicos", tipo:"junior", areas:["Software","Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-13", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a1d49a4f944ad65", prioridad:1, req:["grado","ingles","c","embedded","test","aero"]},
 ];
 
 // Candidaturas enviadas. estado: pendiente | cancelada. Las rechazadas se eliminan (no se guardan).
