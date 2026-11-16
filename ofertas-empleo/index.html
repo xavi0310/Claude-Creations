@@ -212,7 +212,7 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
 /* ===================== DATOS (extraídos de Gmail) ===================== */
-const AS_OF = "2026-11-15";
+const AS_OF = "2026-11-16";
 const gm = id => `https://mail.google.com/mail/u/0/#all/${id}`;
 const li = q => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(q)}&location=Espa%C3%B1a`;
 
@@ -250,6 +250,11 @@ const OFERTAS = [
   {id:"of-airbus-stl", empresa:"Airbus Defence and Space", puesto:"Discover I 2027-2028 Internship in Structural Test Laboratory & Systems Area", tipo:"beca", areas:["Aeroespacial y Defensa","Industrial"], fecha:"2026-11-14", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1d952cc8c9ac68", prioridad:2, req:["grado","ingles","test","aero","mecanica","equipo"]},
   {id:"of-airbus-fps", empresa:"Airbus Defence and Space", puesto:"#Discover I 2027-2028 Future Projects Systems Engineer", tipo:"beca", areas:["Aeroespacial y Defensa"], fecha:"2026-11-14", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1d952cc8c9ac68", prioridad:2, req:["grado","ingles","aero","matlab","equipo","python"]},
   {id:"of-airbus-rcs", empresa:"Airbus Defence and Space", puesto:"#DISCOVER 2027-2028 Electromagnetic Engineer for material characterization and RCS measurements Intern", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-14", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1d952cc8c9ac68", prioridad:3, req:["grado","ingles","rf","matlab","test","aero"]},
+  {id:"of-airbus-sse-power", empresa:"Airbus Defence and Space", puesto:"Space Systems Electrical Engineer (Power)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-15", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1dee6fcb961dfd", prioridad:2, req:["grado","ingles","analog","potencia","electrica","test","aero","simul"]},
+  {id:"of-airbus-qa-ait", empresa:"Airbus Defence and Space", puesto:"QA Engineer in AIT for Space Projects (Satellites, Instruments, Antennas)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-15", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1dee6fcb961dfd", prioridad:1, req:["grado","ingles","test","calidad","aero","analog"]},
+  {id:"of-airbus-isr", empresa:"Airbus Defence and Space", puesto:"Junior ISR Systems Architecture (Military Derivatives)", tipo:"junior", areas:["Aeroespacial y Defensa"], fecha:"2026-11-15", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1dee6fcb961dfd", prioridad:2, req:["grado","ingles","aero","rf","dsp","matlab","test"]},
+  {id:"of-airbus-cockpit", empresa:"Airbus Defence and Space", puesto:"#Discover I 2027-2028 Internship Cockpit Design and Human Factors Engineering", tipo:"beca", areas:["Aeroespacial y Defensa"], fecha:"2026-11-15", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1de79201b2eb12", prioridad:1, req:["grado","ingles","equipo","aero","matlab","python"]},
+  {id:"of-airbus-icd", empresa:"Airbus Defence and Space", puesto:"#Discover I 2027-2028 Generation and Management of AC ICDs using AI Technology Intern", tipo:"beca", areas:["Software","Aeroespacial y Defensa"], fecha:"2026-11-15", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1de79201b2eb12", prioridad:2, req:["grado","ingles","ia","python","aero","test"]},
 ];
 
 // Candidaturas enviadas. estado: pendiente | cancelada. Las rechazadas se eliminan (no se guardan).
