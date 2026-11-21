@@ -212,7 +212,7 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
 /* ===================== DATOS (extraídos de Gmail) ===================== */
-const AS_OF = "2026-11-20";
+const AS_OF = "2026-11-21";
 const gm = id => `https://mail.google.com/mail/u/0/#all/${id}`;
 const li = q => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(q)}&location=Espa%C3%B1a`;
 
@@ -265,6 +265,12 @@ const OFERTAS = [
   {id:"of-pangea-actuator", empresa:"Pangea Propulsion", puesto:"Actuator Driver Development Intern", tipo:"beca", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-17", lugar:"Barcelona", fuente:"LinkedIn", thread:"1a1e8c5dc9a4019f", prioridad:2, req:["grado","ingles","potencia","embedded","pcb","c","aero"]},
   {id:"of-sener-jrhw", empresa:"Sener", puesto:"Ingeniero/a Junior de Hardware para Equipos Electrónicos", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-19", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a1f3807453ab122", prioridad:2, req:["grado","ingles","analog","digital","pcb","test","embedded","aero"]},
   {id:"of-airbus-radiometer", empresa:"Airbus Defence and Space", puesto:"Microwave Radiometer RF Engineer (entry level)", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-19", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1f312936eb135f", prioridad:2, req:["grado","ingles","rf","analog","test","matlab","aero"]},
+  {id:"of-ahe-msd", empresa:"Airbus Helicopters", puesto:"#BECA AHE – Mission System Design", tipo:"beca", areas:["Aeroespacial y Defensa","Electrónica"], fecha:"2026-11-20", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1f8a6ceda3bec0", prioridad:3, req:["grado","ingles","aero","matlab","equipo","test"]},
+  {id:"of-airbus-sdi", empresa:"Airbus Defence and Space", puesto:"#Discover II 2026-2027 Internship in Service Data Integration", tipo:"beca", areas:["Software","Aeroespacial y Defensa"], fecha:"2026-11-20", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1f8a6ceda3bec0", prioridad:2, req:["grado","ingles","python","ia","aero","test"]},
+  {id:"of-airbus-a350q", empresa:"Airbus", puesto:"#DISCOVER I 2027-2028 Internship – A350 Section 19 Quality Production", tipo:"beca", areas:["Industrial","Aeroespacial y Defensa"], fecha:"2026-11-20", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1f8a6ceda3bec0", prioridad:1, req:["grado","ingles","calidad","lean","aero","equipo"]},
+  {id:"of-airbus-qsi", empresa:"Airbus", puesto:"#Discover I 2027-2028 Quality Support & Improvement Getafe Internship", tipo:"beca", areas:["Industrial"], fecha:"2026-11-20", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1f8a6ceda3bec0", prioridad:1, req:["grado","ingles","calidad","lean","aero","equipo"]},
+  {id:"of-arq-rf", empresa:"ARQUIMEA", puesto:"RF & Microwave Engineer – Simulation & Design", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-20", lugar:"Madrid (Serrano Galvache)", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a1f972b652b36c5", prioridad:2, nota:"Puesto de ingeniero sin etiqueta junior: revisa los años de experiencia pedidos.", req:["grado","ingles","rf","simul","analog","matlab","aero"]},
+  {id:"of-emb-agv", empresa:"ELMUNDODELBECARIO", puesto:"Prácticas en automatización y mantenimiento de robots AGV/AMR", tipo:"beca", areas:["Robótica","Automática y Control"], fecha:"2026-11-20", lugar:"Sevilla", fuente:"LinkedIn", thread:"1a1f838ecc492f34", prioridad:1, nota:"800 €/mes; fuera de la zona de Madrid.", req:["grado","robot","plc","sensores","embedded","control"]},
 ];
 
 // Candidaturas enviadas. estado: pendiente | cancelada. Las rechazadas se eliminan (no se guardan).
