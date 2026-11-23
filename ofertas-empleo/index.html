@@ -212,7 +212,7 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
 /* ===================== DATOS (extraídos de Gmail) ===================== */
-const AS_OF = "2026-11-22";
+const AS_OF = "2026-11-23";
 const gm = id => `https://mail.google.com/mail/u/0/#all/${id}`;
 const li = q => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(q)}&location=Espa%C3%B1a`;
 
@@ -274,6 +274,10 @@ const OFERTAS = [
   {id:"of-airbus-qsi", empresa:"Airbus", puesto:"#Discover I 2027-2028 Quality Support & Improvement Getafe Internship", tipo:"beca", areas:["Industrial"], fecha:"2026-11-20", lugar:"Getafe", fuente:"LinkedIn", thread:"1a1f8a6ceda3bec0", prioridad:1, req:["grado","ingles","calidad","lean","aero","equipo"]},
   {id:"of-arq-rf", empresa:"ARQUIMEA", puesto:"RF & Microwave Engineer – Simulation & Design", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-20", lugar:"Madrid (Serrano Galvache)", fuente:"ARQUIMEA (vacantes para tu perfil)", thread:"1a1f972b652b36c5", prioridad:2, nota:"Puesto de ingeniero sin etiqueta junior: revisa los años de experiencia pedidos.", req:["grado","ingles","rf","simul","analog","matlab","aero"]},
   {id:"of-emb-agv", empresa:"ELMUNDODELBECARIO", puesto:"Prácticas en automatización y mantenimiento de robots AGV/AMR", tipo:"beca", areas:["Robótica","Automática y Control"], fecha:"2026-11-20", lugar:"Sevilla", fuente:"LinkedIn", thread:"1a1f838ecc492f34", prioridad:1, nota:"800 €/mes; fuera de la zona de Madrid.", req:["grado","robot","plc","sensores","embedded","control"]},
+  {id:"of-jet-elec", empresa:"Jet Aviation", puesto:"Intern Electrical Engineering", tipo:"beca", areas:["Aeroespacial y Defensa","Industrial"], fecha:"2026-11-22", lugar:"Madrid", fuente:"LinkedIn", thread:"1a202f387908b2f0", prioridad:2, req:["grado","ingles","electrica","eplan","analog","test","aero"]},
+  {id:"of-airbus-aeh", empresa:"Airbus Defence and Space", puesto:"Avionics - Airborne Electronic Hardware Designer", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-22", lugar:"Getafe", fuente:"LinkedIn", thread:"1a20285a552a8154", prioridad:2, nota:"Diseño de hardware electrónico de aviónica: revisa los años de experiencia pedidos.", req:["grado","ingles","analog","digital","pcb","fpga","test","aero"]},
+  {id:"of-airbus-sita", empresa:"Airbus", puesto:"Space Industrialization Test Area Engineer", tipo:"junior", areas:["Aeroespacial y Defensa","Industrial"], fecha:"2026-11-22", lugar:"Madrid", fuente:"LinkedIn", thread:"1a20285a552a8154", prioridad:1, req:["grado","ingles","test","aero","lean","calidad"]},
+  {id:"of-sener-rams", empresa:"Sener", puesto:"Product Assurance Engineer - RAMS Specialist", tipo:"junior", areas:["Aeroespacial y Defensa","Industrial"], fecha:"2026-11-22", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a20285a552a8154", prioridad:1, nota:"Revisa los años de experiencia pedidos.", req:["grado","ingles","calidad","test","aero"]},
 ];
 
 // Candidaturas enviadas. estado: pendiente | cancelada. Las rechazadas se eliminan (no se guardan).
