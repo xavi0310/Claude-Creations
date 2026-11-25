@@ -212,7 +212,7 @@ footer{margin-top:40px;color:var(--muted);font-size:12px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
 /* ===================== DATOS (extraídos de Gmail) ===================== */
-const AS_OF = "2026-11-23";
+const AS_OF = "2026-11-25";
 const gm = id => `https://mail.google.com/mail/u/0/#all/${id}`;
 const li = q => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(q)}&location=Espa%C3%B1a`;
 
@@ -278,17 +278,23 @@ const OFERTAS = [
   {id:"of-airbus-aeh", empresa:"Airbus Defence and Space", puesto:"Avionics - Airborne Electronic Hardware Designer", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-22", lugar:"Getafe", fuente:"LinkedIn", thread:"1a20285a552a8154", prioridad:2, nota:"Diseño de hardware electrónico de aviónica: revisa los años de experiencia pedidos.", req:["grado","ingles","analog","digital","pcb","fpga","test","aero"]},
   {id:"of-airbus-sita", empresa:"Airbus", puesto:"Space Industrialization Test Area Engineer", tipo:"junior", areas:["Aeroespacial y Defensa","Industrial"], fecha:"2026-11-22", lugar:"Madrid", fuente:"LinkedIn", thread:"1a20285a552a8154", prioridad:1, req:["grado","ingles","test","aero","lean","calidad"]},
   {id:"of-sener-rams", empresa:"Sener", puesto:"Product Assurance Engineer - RAMS Specialist", tipo:"junior", areas:["Aeroespacial y Defensa","Industrial"], fecha:"2026-11-22", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a20285a552a8154", prioridad:1, nota:"Revisa los años de experiencia pedidos.", req:["grado","ingles","calidad","test","aero"]},
+  {id:"of-airbus-esw", empresa:"Airbus Defence and Space", puesto:"Embedded Software Engineer", tipo:"junior", areas:["Software","Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-24", lugar:"Getafe", fuente:"LinkedIn", thread:"1a20d897a8a7ee06", prioridad:1, nota:"Revisa los años de experiencia pedidos.", req:["grado","ingles","c","cpp","embedded","test","aero"]},
+  {id:"of-arq-ehw", empresa:"ARQUIMEA", puesto:"Electronic Hardware Engineer", tipo:"junior", areas:["Electrónica","Aeroespacial y Defensa"], fecha:"2026-11-24", lugar:"Torrejón de Ardoz", fuente:"LinkedIn", thread:"1a20d897a8a7ee06", prioridad:2, nota:"Puesto de ingeniero sin etiqueta junior: revisa los años de experiencia pedidos.", req:["grado","ingles","analog","digital","pcb","test"]},
+  {id:"of-sener-hmi", empresa:"Sener", puesto:"Desarrollador/a de Interfaces Gráficas HMI Web", tipo:"junior", areas:["Software","Industrial"], fecha:"2026-11-24", lugar:"Tres Cantos", fuente:"LinkedIn", thread:"1a20d4040165405a", prioridad:1, req:["grado","ingles","scada","python","test"]},
+  {id:"of-airbus-aero", empresa:"Airbus Defence and Space", puesto:"Junior Aerodynamics Engineer", tipo:"junior", areas:["Aeroespacial y Defensa"], fecha:"2026-11-24", lugar:"Getafe", fuente:"LinkedIn", thread:"1a20cd25d5651be3", prioridad:1, req:["grado","ingles","matlab","python","aero"]},
+  {id:"of-abb-pe", empresa:"ABB", puesto:"Internship: Project Engineer", tipo:"beca", areas:["Automática y Control","Industrial"], fecha:"2026-11-24", lugar:"Sant Quirze del Vallès (Barcelona)", fuente:"LinkedIn", thread:"1a20cd25d5651be3", prioridad:2, nota:"Fuera de la zona de Madrid.", req:["grado","ingles","plc","electrica","eplan","control"]},
+  {id:"of-airbus-cgcs", empresa:"Airbus Defence and Space", puesto:"Cockpit & Ground Control Systems Engineer", tipo:"junior", areas:["Aeroespacial y Defensa","Electrónica"], fecha:"2026-11-23", lugar:"Getafe", fuente:"LinkedIn", thread:"1a207ac08a44f6c6", prioridad:1, nota:"Revisa los años de experiencia pedidos.", req:["grado","ingles","aero","test","embedded","matlab"]},
 ];
 
 // Candidaturas enviadas. estado: pendiente | cancelada. Las rechazadas se eliminan (no se guardan).
 const CANDIDATURAS = [
+  {empresa:"Accenture", puesto:"BECA Universitaria Ingenieros becarios (R00333142)", fecha:"2026-11-25", estado:"pendiente", areas:["Industrial"], thread:"1a21340fa785a56a", detalle:"Entrevista: ver pestaña Entrevistas", req:["grado","ingles","equipo"]},
   {empresa:"Airbus", puesto:"#XPLORER 2027 – Training Simulators", fecha:"2026-11-09", estado:"pendiente", areas:["Aeroespacial y Defensa","Software"], thread:"1a1c10b01df83309", req:["grado","ingles","c","cpp","matlab","aero"]},
   {empresa:"Airbus", puesto:"#Discover I 2027-2028 Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Aeroespacial y Defensa"], thread:"1a1ac4db3dfaac67", req:["grado","ingles","aero","equipo"]},
   {empresa:"ARQUIMEA", puesto:"Verification Engineer Internship", fecha:"2026-11-05", estado:"pendiente", areas:["Electrónica"], thread:"1a1ac4b414fdb169", req:["grado","ingles","test","digital","fpga","embedded"]},
   {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería de Hardware Electrónico", fecha:"2026-10-22", estado:"pendiente", areas:["Electrónica"], thread:"1a1636c36c922fb4", req:["grado","analog","digital","pcb","simul","test"]},
   {empresa:"EM&E Group", puesto:"Candidatura vía LinkedIn (la empresa ha visto tu solicitud)", fecha:"2026-10-20", estado:"pendiente", areas:["Electrónica"], thread:"1a1592a8e43ca10c", detalle:"Vista por la empresa el 20/10", req:["grado","analog","digital","test"]},
   {empresa:"ARQUIMEA", puesto:"Beca en Ingeniería Electrónica de Sistemas", fecha:"2026-10-16", estado:"pendiente", areas:["Electrónica"], thread:"1a1448b426e9d6da", req:["grado","analog","digital","test","ingles","aero"]},
-  {empresa:"Grupo Amper", puesto:"Candidatura espontánea: prácticas en defensa (desde enero)", fecha:"2026-10-13", estado:"pendiente", areas:["Aeroespacial y Defensa","Electrónica"], thread:"1a134139522be965", detalle:"Enviada por email a RR. HH. tras hablar con ellos en el Next Force Summit (8/10)", req:["grado","ingles","analog","digital","test","aero"]},
   {empresa:"Piedrafita", puesto:"Candidatura espontánea: prácticas en defensa (desde enero)", fecha:"2026-10-13", estado:"pendiente", areas:["Aeroespacial y Defensa","Industrial"], thread:"1a134256cc12bd78", detalle:"Enviada por email al contacto que conociste en el Next Force Summit (8/10)", req:["grado","ingles","mecanica","electrica","test","aero"]},
   {empresa:"CT Ingenieros", puesto:"CV en portal de empleo (candidatura abierta)", fecha:"2026-10-13", estado:"pendiente", areas:["Industrial"], thread:"1a13436ed922cde6", req:["grado","electrica","eplan"]},
   {empresa:"Airbus", puesto:"#XPLORER 2027 – Robotics & Automation", fecha:"2026-10-09", estado:"pendiente", areas:["Robótica","Automática y Control"], thread:"1a11ffb6cec1ac9a", req:["grado","ingles","robot","plc","control"]},
